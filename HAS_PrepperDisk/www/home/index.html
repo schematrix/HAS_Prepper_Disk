@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HAS_PrepperDisk :: Ana Sayfa</title>
+<style>
+  body{margin:0;background:#E5E5E5;color:#000;font-family:Verdana,Tahoma,Arial,sans-serif;font-size:11px}
+  a{color:#006699;text-decoration:none}
+  a:hover{color:#DD6900;text-decoration:underline}
+  .wrap{max-width:980px;margin:0 auto;padding:10px}
+  .bodyline{background:#fff;border:1px solid #98AAB1;padding:8px}
+
+  /* başlık */
+  .top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:4px 4px 10px}
+  .logo{font-family:"Trebuchet MS",Verdana,sans-serif;font-size:26px;font-weight:bold;color:#006699;letter-spacing:-1px;
+    text-shadow:1px 1px 0 #C7D0D7}
+  .logo span{color:#DD6900}
+  .slogan{font-size:11px;color:#555;margin-top:2px}
+  .navlinks{font-size:11px;font-weight:bold}
+  .navlinks a{margin-left:10px}
+  .navlinks a::before{content:"» ";color:#999;font-weight:normal}
+
+  .crumb{font-weight:bold;font-size:12px;margin:8px 2px}
+  .small{font-size:10px;color:#444}
+
+  /* tablolar */
+  .scroll{overflow-x:auto}
+  table.forumline{width:100%;border-collapse:collapse;border:1px solid #006699;background:#fff;margin-bottom:10px}
+  .forumline th{background:linear-gradient(#3F7FAD,#006699);color:#FFA34F;font-size:11px;font-weight:bold;
+    height:24px;padding:0 6px;border:1px solid #fff;border-top:0;white-space:nowrap}
+  .forumline td{padding:5px 6px;border:1px solid #fff}
+  td.cat{background:linear-gradient(#EEF2F5,#C7D0D7);height:22px;font-weight:bold;font-size:12px;letter-spacing:1px}
+  td.cat a{color:#006699}
+  td.row1{background:#EFEFEF}
+  td.row2{background:#DEE3E7}
+  td.row3{background:#D1D7DC}
+  td.c{text-align:center}
+  .fname{font-size:12px;font-weight:bold}
+  .fdesc{font-size:11px;color:#222;margin-top:2px}
+  .fmod{font-size:10px;color:#666;margin-top:3px}
+  .off .fname{color:#777}
+
+  /* klasör ikonları */
+  .fold{display:inline-block;position:relative;width:22px;height:16px;margin-top:4px;
+    background:linear-gradient(#FFE38A,#F2B935);border:1px solid #B07F12;border-radius:1px}
+  .fold::before{content:"";position:absolute;left:-1px;top:-5px;width:9px;height:4px;background:#F7CF5C;
+    border:1px solid #B07F12;border-bottom:0;border-radius:2px 2px 0 0}
+  .fold.new::after{content:"";position:absolute;right:-4px;top:-4px;width:7px;height:7px;background:#E2451D;
+    border:1px solid #fff;border-radius:50%}
+  .fold.gray{background:linear-gradient(#E6E6E6,#B9B9B9);border-color:#888}
+  .fold.gray::before{background:#D3D3D3;border-color:#888}
+
+  /* arama kutusu */
+  .search td{background:#EFEFEF}
+  .search input[type=text],.search select{font-family:Verdana,sans-serif;font-size:11px;border:1px solid #7F9DB9;padding:2px;background:#fff}
+  .search input[type=text]{width:220px;max-width:100%}
+  .btn{font-family:Verdana,sans-serif;font-size:11px;font-weight:bold;background:#FAFAFA;border:1px solid #000;padding:1px 6px;cursor:pointer}
+  .btn:hover{background:#FFF3D6}
+
+  .legend{display:flex;gap:18px;flex-wrap:wrap;align-items:center;margin:4px 2px 10px}
+  .legend span{display:flex;align-items:center;gap:6px}
+  .legend .fold{margin-top:0;transform:scale(.8)}
+
+  .copy{text-align:center;font-size:10px;color:#444;margin:12px 0 4px;line-height:1.6}
+
+  @media (max-width:640px){ .hide-s{display:none} .logo{font-size:22px} }
+</style>
+</head>
+<body>
+<div class="wrap"><div class="bodyline">
+
+  <div class="top">
+    <div>
+      <div class="logo">HAS_<span>Prepper</span>Disk</div>
+      <div class="slogan">Çevrimdışı bilgi arşivi &mdash; internet olmasa da açık</div>
+    </div>
+    <div class="navlinks">
+      <a href="/kiwix/">Kütüphane</a><a href="/maps">Haritalar</a><a href="/admin">Yönetim</a>
+    </div>
+  </div>
+
+  <table class="forumline search"><tr><td>
+    <form id="search">
+      <b>Ara:</b>
+      <input type="text" id="q" placeholder="ilk yardım, su arıtma...">
+      <select id="book"></select>
+      <input type="submit" class="btn" value="Git">
+    </form>
+  </td></tr></table>
+
+  <div class="crumb"><a href="/home">HAS_PrepperDisk Ana Sayfa</a></div>
+  <div class="small" style="margin:0 2px 6px" id="now"></div>
+
+  <div class="scroll">
+  <table class="forumline" id="forums">
+    <tr>
+      <th colspan="2">Bölüm</th>
+      <th class="hide-s" width="60">Dil</th>
+      <th width="80">Boyut</th>
+      <th class="hide-s" width="150">Durum</th>
+    </tr>
+  </table>
+  </div>
+
+  <div class="legend small">
+    <span><i class="fold"></i> Hazır</span>
+    <span><i class="fold gray"></i> Henüz yüklenmedi</span>
+  </div>
+
+  <table class="forumline">
+    <tr><td class="cat">Sistem bilgisi</td></tr>
+    <tr><td class="row1" id="stats"></td></tr>
+  </table>
+
+  <div class="copy">
+    HAS_PrepperDisk &copy; 2026 &middot; Raspberry Pi 5 üzerinde çalışır<br>
+    İçerikler: Wikipedia, OpenStreetMap, Kolibri &mdash; ilgili lisanslar altında
+  </div>
+
+</div></div>
+
+<script>
+/* İçerik listesi. Bölüm eklemek/çıkarmak için sadece burayı düzenle.
+   zim: Kiwix dosya adının tarihsiz başı. Sayfa, cihazda hangi sürümün
+        yüklü olduğunu Kiwix kataloğundan kendisi bulur.
+   url: zim olmayan servisler için sabit adres.
+   Cihazda bulunamayan ZIM'ler gri klasörle "henüz yüklenmedi" görünür. */
+const CATS = [
+  { title:"Ansiklopedi", items:[
+    { name:"Vikipedi (Türkçe)", desc:"Türkçe Vikipedi'nin resimli tam kopyası.", lang:"TR", size:"~8 GB", zim:"wikipedia_tr_all_maxi", search:true },
+    { name:"Wikipedia (English)", desc:"Tüm İngilizce Wikipedia, resimleriyle birlikte.", lang:"EN", size:"~120 GB", zim:"wikipedia_en_all_maxi", search:true },
+  ]},
+  { title:"Haritalar ve Navigasyon", items:[
+    { name:"Dünya Haritası", desc:"OpenStreetMap tabanlı, yakınlaştırılabilir harita.", lang:"—", size:"—", url:"/maps" },
+  ]},
+  { title:"Sağlık, Tamir ve Hayatta Kalma", items:[
+    { name:"Tıbbi Başvuru", desc:"WikiMed: hastalıklar, ilaçlar, ilk yardım.", lang:"EN", size:"~2 GB", zim:"wikipedia_en_medicine_maxi", search:true },
+    { name:"Tamir Kılavuzları", desc:"iFixit adım adım tamir rehberleri.", lang:"EN", size:"~3 GB", zim:"ifixit_en_all", search:true },
+  ]},
+  { title:"Eğitim", items:[
+    { name:"Kolibri", desc:"Çevrimdışı dersler ve eğitim videoları.", lang:"—", size:"—", url:"/kolibri" },
+  ]},
+];
+
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+/* Kiwix kataloğundan cihazdaki ZIM'leri oku: { "wikipedia_tr_all_maxi_2026-09": "/kiwix/content/..." } */
+async function loadBooks(){
+  try{
+    const r = await fetch("/kiwix/catalog/v2/entries?count=-1");
+    const xml = new DOMParser().parseFromString(await r.text(), "application/xml");
+    const books = [];
+    for (const l of xml.querySelectorAll('entry link[type="text/html"]')) {
+      const href = l.getAttribute("href");
+      books.push({ id: href.split("/").filter(Boolean).pop(), href });
+    }
+    return books;
+  }catch(e){ return null; }
+}
+
+function render(books){
+  let html = "", ready = 0, total = 0;
+  const sel = document.getElementById("book");
+  for (const c of CATS) {
+    html += `<tr><td class="cat" colspan="5">${esc(c.title)}</td></tr>`;
+    for (const i of c.items) {
+      total++;
+      let url = i.url || null, status = i.url ? "Kurulu" : "Henüz yüklenmedi";
+      if (i.zim) {
+        if (books === null) { url = "/kiwix/"; status = "Kütüphaneden açın"; }
+        else {
+          const b = books.filter(b => b.id.startsWith(i.zim)).sort((a,z) => a.id < z.id ? 1 : -1)[0];
+          if (b) {
+            url = b.href;
+            const v = b.id.match(/(\d{4})-(\d{2})$/);
+            status = v ? `${v[2]}/${v[1]} sürümü` : "Kurulu";
+            if (i.search) sel.add(new Option(i.name, b.id));
+          }
+        }
+      }
+      if (url) ready++;
+      const icon = !url ? "fold gray" : "fold";
+      const name = url ? `<a href="${esc(url)}" class="fname">${esc(i.name)}</a>` : `<span class="fname">${esc(i.name)}</span>`;
+      html += `<tr class="${url ? "" : "off"}">
+        <td class="row1 c" width="40"><i class="${icon}"></i></td>
+        <td class="row1">${name}<div class="fdesc">${esc(i.desc)}</div></td>
+        <td class="row2 c hide-s">${esc(i.lang)}</td>
+        <td class="row2 c">${esc(i.size)}</td>
+        <td class="row3 hide-s small">${esc(status)}</td></tr>`;
+    }
+  }
+  document.getElementById("forums").insertAdjacentHTML("beforeend", html);
+  if (!sel.options.length) sel.add(new Option("Tüm kütüphane", ""));
+  document.getElementById("stats").innerHTML =
+    `Toplam <b>${total}</b> kaynak var, bunlardan <b>${ready}</b> tanesi kullanıma hazır.<br>
+     Bu sayfa internet bağlantısı olmadan çalışır.`;
+}
+
+const d = new Date();
+document.getElementById("now").textContent =
+  "Sunucu saati: " + d.toLocaleDateString("tr-TR") + " " + d.toLocaleTimeString("tr-TR",{hour:"2-digit",minute:"2-digit"});
+
+document.getElementById("search").addEventListener("submit", e => {
+  e.preventDefault();
+  const q = document.getElementById("q").value.trim();
+  const book = document.getElementById("book").value;
+  if (!q) return;
+  location.href = book
+    ? `/kiwix/search?books.name=${encodeURIComponent(book)}&pattern=${encodeURIComponent(q)}`
+    : `/kiwix/search?pattern=${encodeURIComponent(q)}`;
+});
+
+loadBooks().then(render);
+</script>
+</body>
+</html>

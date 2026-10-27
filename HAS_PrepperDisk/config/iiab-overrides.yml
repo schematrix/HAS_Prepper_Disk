@@ -1,0 +1,38 @@
+# HAS_PrepperDisk: Internet-in-a-Box ayar değişiklikleri
+# install.sh bu satırları /etc/iiab/local_vars.yml içine yazar.
+# Wi-Fi adı (host_ssid) ve şifresi kurulum sırasında sorulur.
+#
+# HAS_PrepperDisk: overrides applied to Internet-in-a-Box's local_vars.yml.
+# The Wi-Fi name and password are asked during install.
+
+host_country_code: TR
+
+# Wi-Fi hotspot
+hostapd_enabled: True
+hostapd_secure: True
+
+# Kiwix (offline Wikipedia & other ZIM files)
+kiwix_install: True
+kiwix_enabled: True
+
+# Maps (OpenStreetMap)
+maps_install: True
+maps_enabled: True
+
+# Kolibri (offline lessons)
+kolibri_install: True
+kolibri_enabled: True
+
+# Admin console (content downloads from the browser)
+admin_console_install: True
+admin_console_enabled: True
+
+# Not needed for a prepper disk; disabled to keep install short
+nextcloud_install: False
+nextcloud_enabled: False
+wordpress_install: False
+wordpress_enabled: False
+moodle_install: False
+moodle_enabled: False
+mediawiki_install: False
+mediawiki_enabled: False
