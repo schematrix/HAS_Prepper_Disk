@@ -11,6 +11,11 @@ host_country_code: TR
 hostapd_enabled: True
 hostapd_secure: True
 
+# Captive portal: telefon ağa bağlanınca ana sayfa kendiliğinden açılır
+# Captive portal: the homepage pops up when a phone joins the network
+captiveportal_install: True
+captiveportal_enabled: True
+
 # Kiwix (offline Wikipedia & other ZIM files)
 kiwix_install: True
 kiwix_enabled: True
