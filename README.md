@@ -1,4 +1,6 @@
-# HAS_PrepperDisk
+
+<img width="347" height="62" alt="image" src="https://github.com/user-attachments/assets/7241f6d3-93da-4f2c-9615-7d33f293cfcc" />
+
 
 **[English](#english) · [Türkçe](#türkçe)**
 
