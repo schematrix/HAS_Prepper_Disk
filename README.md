@@ -81,6 +81,7 @@ www/home/index.html        homepage
   # after downloads finish:
   warp-cli --accept-tos disconnect
   ```
+- **Book collections (Water Treatment, Knots, Food for Preppers, Post-Disaster, Medicine) keep loading forever.** These collections store their book list in the browser's local database. iPhone Safari private tabs and the captive portal pop-up window block that. Open them in a normal Safari tab.
 - **Restoring the original homepage:** `sudo cp /library/www/html/home/index.html.iiab-original /library/www/html/home/index.html`
 
 ### License
@@ -164,6 +165,7 @@ www/home/index.html          ana sayfa
   # indirmeler bitince:
   warp-cli --accept-tos disconnect
   ```
+- **Kitap koleksiyonları (Su Arıtma, Düğümler, Gıda, Afet Sonrası, Tıp) sürekli "yükleniyor" diyor.** Bu koleksiyonlar kitap listesini tarayıcının yerel veritabanında tutuyor. iPhone Safari'nin gizli sekmesi ve captive portal penceresi buna izin vermiyor. Normal bir Safari sekmesinde aç.
 - **Orijinal ana sayfaya dönmek için:** `sudo cp /library/www/html/home/index.html.iiab-original /library/www/html/home/index.html`
 
 ### Lisans
