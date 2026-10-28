@@ -27,6 +27,7 @@ while read -r folder prefix _; do
   df -h /library | tail -1
   if wget -c --progress=dot:giga -O "$DEST/$latest.part" "$BASE/$folder/$latest" < /dev/null; then
     mv "$DEST/$latest.part" "$DEST/$latest"
+    echo "OK $latest tamamlandı / done"
     # Eski sürümleri sil / remove older versions of the same ZIM
     for old in "$DEST/${prefix}"_*.zim; do
       [ "$old" != "$DEST/$latest" ] && [ -f "$old" ] && { echo "-- eski sürüm siliniyor / removing $old"; rm -f "$old"; }
