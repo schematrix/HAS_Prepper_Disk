@@ -18,7 +18,7 @@ failed=0
 while read -r folder prefix _; do
   case "$folder" in ''|\#*) continue;; esac
 
-  latest=$(curl -fsSL "$BASE/$folder/" | grep -oE "${prefix}_[0-9]{4}-[0-9]{2}\.zim" | sort -u | tail -1)
+  latest=$(curl -fsSL "$BASE/$folder/" | grep -oE "${prefix}_[0-9]{4}-[0-9]{2}[a-z]?\.zim" | sort -u | tail -1)
   if [ -z "$latest" ]; then echo "!! $prefix bulunamadı / not found in $BASE/$folder/"; failed=1; continue; fi
 
   if [ -f "$DEST/$latest" ]; then echo "== $latest zaten var / already present"; continue; fi

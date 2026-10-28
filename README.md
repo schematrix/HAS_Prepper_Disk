@@ -46,7 +46,7 @@ sudo ./scripts/setup-ssd.sh /dev/nvme0n1
 sudo ./install.sh
 ```
 
-**5. Download content.** Edit `config/content.conf` to choose what to download, then run the script below. The defaults need about 135 GB, and downloads can take many hours. If a download is interrupted, re-run the script and it resumes.
+**5. Download content.** Edit `config/content.conf` to choose what to download, then run the script below. The defaults need about 150 GB, and downloads can take many hours. If a download is interrupted, re-run the script and it resumes.
 ```bash
 sudo ./scripts/download-content.sh
 ```
@@ -72,6 +72,15 @@ www/home/index.html        homepage
 - **`ssh user@hostname.local` stops working after install.** Internet-in-a-Box renames the Pi to `box`. Use `ssh user@box.local` or the Pi's IP address. To find the IP, run `arp -a` on your computer or check your router's device list.
 - **Chromium says the profile is locked.** This also comes from the hostname change. Click "Unlock Profile", or run `rm -f ~/.config/chromium/Singleton*`.
 - **The hotspot doesn't appear.** Connect over Ethernet, check `sudo iiab-diagnostics`, and make sure the install finished: `/etc/iiab/install-flags/iiab-complete` must exist.
+- **Map downloads fail with "connection reset by peer".** The map server (`contabostorage.com`) is blocked in some countries, e.g. Turkey. Install Cloudflare WARP on the Pi, connect, retry the download in the admin console, then disconnect:
+  ```bash
+  curl -fsSL https://pkg.cloudflareclient.com/pubkey.gpg | sudo gpg --yes --dearmor -o /usr/share/keyrings/cloudflare-warp-archive-keyring.gpg
+  echo "deb [signed-by=/usr/share/keyrings/cloudflare-warp-archive-keyring.gpg] https://pkg.cloudflareclient.com/ $(. /etc/os-release; echo $VERSION_CODENAME) main" | sudo tee /etc/apt/sources.list.d/cloudflare-client.list
+  sudo apt update && sudo apt install -y cloudflare-warp
+  warp-cli --accept-tos registration new && warp-cli --accept-tos connect
+  # after downloads finish:
+  warp-cli --accept-tos disconnect
+  ```
 - **Restoring the original homepage:** `sudo cp /library/www/html/home/index.html.iiab-original /library/www/html/home/index.html`
 
 ### License
@@ -120,7 +129,7 @@ sudo ./scripts/setup-ssd.sh /dev/nvme0n1
 sudo ./install.sh
 ```
 
-**5. İçerikleri indir.** Ne indirileceğini `config/content.conf` dosyasından seç, sonra aşağıdaki betiği çalıştır. Varsayılan liste yaklaşık 135 GB tutar ve indirme saatler sürebilir. İndirme yarıda kalırsa betiği tekrar çalıştırman yeterli, kaldığı yerden devam eder.
+**5. İçerikleri indir.** Ne indirileceğini `config/content.conf` dosyasından seç, sonra aşağıdaki betiği çalıştır. Varsayılan liste yaklaşık 150 GB tutar ve indirme saatler sürebilir. İndirme yarıda kalırsa betiği tekrar çalıştırman yeterli, kaldığı yerden devam eder.
 ```bash
 sudo ./scripts/download-content.sh
 ```
@@ -146,6 +155,15 @@ www/home/index.html          ana sayfa
 - **Kurulumdan sonra `ssh kullanici@hostname.local` çalışmıyor.** Internet-in-a-Box cihazın adını `box` yapar. `ssh kullanici@box.local` ya da Pi'nin IP adresini kullan. IP adresini bulmak için bilgisayarında `arp -a` çalıştır ya da modeminin cihaz listesine bak.
 - **Chromium "profile is locked" hatası veriyor.** Bu da cihaz adının değişmesinden kaynaklanır. "Unlock Profile" butonuna tıkla ya da `rm -f ~/.config/chromium/Singleton*` komutunu çalıştır.
 - **Hotspot görünmüyor.** Ethernet ile bağlan, `sudo iiab-diagnostics` komutuyla kontrol et ve kurulumun bittiğinden emin ol: `/etc/iiab/install-flags/iiab-complete` dosyası var olmalı.
+- **Harita indirmesi "connection reset by peer" hatası veriyor.** Harita sunucusu (`contabostorage.com`) Türkiye gibi bazı ülkelerde engelli. Pi'ye Cloudflare WARP kur, bağlan, indirmeyi yönetim panelinden tekrar başlat ve bitince bağlantıyı kapat:
+  ```bash
+  curl -fsSL https://pkg.cloudflareclient.com/pubkey.gpg | sudo gpg --yes --dearmor -o /usr/share/keyrings/cloudflare-warp-archive-keyring.gpg
+  echo "deb [signed-by=/usr/share/keyrings/cloudflare-warp-archive-keyring.gpg] https://pkg.cloudflareclient.com/ $(. /etc/os-release; echo $VERSION_CODENAME) main" | sudo tee /etc/apt/sources.list.d/cloudflare-client.list
+  sudo apt update && sudo apt install -y cloudflare-warp
+  warp-cli --accept-tos registration new && warp-cli --accept-tos connect
+  # indirmeler bitince:
+  warp-cli --accept-tos disconnect
+  ```
 - **Orijinal ana sayfaya dönmek için:** `sudo cp /library/www/html/home/index.html.iiab-original /library/www/html/home/index.html`
 
 ### Lisans
