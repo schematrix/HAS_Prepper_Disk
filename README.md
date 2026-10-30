@@ -21,6 +21,10 @@ Built on [Internet-in-a-Box](https://github.com/iiab/iiab) and [Kiwix](https://k
 | Active cooler | The Pi 5 and SSD get warm |
 | Ethernet cable | Recommended during install |
 
+
+<img width="572" height="774" alt="Screenshot 2026-10-30 at 23 22 21" src="https://github.com/user-attachments/assets/0f8cf21f-2407-4346-a9ec-e466cc926ade" />
+
+
 ### Installation
 
 **1. Operating system.** Use Raspberry Pi Imager to flash **Raspberry Pi OS Lite (64-bit)** to the SD card. In Imager's settings, enable SSH and set a username and password. Boot the Pi with the SSD attached and connect it to your router with Ethernet.
