@@ -1,7 +1,3 @@
-
-<img width="347" height="62" alt="image" src="https://github.com/user-attachments/assets/7241f6d3-93da-4f2c-9615-7d33f293cfcc" />
-
-
 <p align="center"><img src="assets/demo.gif" width="400" alt="HAS_PrepperDisk exploded view"></p>
 
 **[English](#english) · [Türkçe](#türkçe)**
