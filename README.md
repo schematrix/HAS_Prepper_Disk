@@ -55,6 +55,21 @@ sudo ./scripts/download-content.sh
 
 **7. Use it.** Join the Wi-Fi network you created and open **http://box.lan/home**.
 
+### Optional: internet over a USB Wi-Fi adapter
+
+The Pi's built-in Wi-Fi is dedicated to the hotspot. If the Pi needs internet temporarily (updates, new content) and there is no Ethernet cable, add a cheap USB Wi-Fi adapter as a second card. Adapters with the MediaTek MT7601U chip work out of the box.
+
+1. Plug the adapter in, preferably into a black USB 2.0 port. The blue USB 3.0 ports can interfere with 2.4 GHz Wi-Fi.
+2. Join the Pi's hotspot from your laptop and connect: `ssh user@10.10.10.10`
+3. Connect the adapter (usually `wlan1`) to a Wi-Fi network:
+   ```bash
+   nmcli device wifi list ifname wlan1
+   sudo nmcli device wifi connect "NETWORK_NAME" password "PASSWORD" ifname wlan1 name temp-wifi
+   ```
+4. When you are done, remove the connection: `sudo nmcli connection delete temp-wifi`
+
+**Never run `sudo iiab-network` while a USB Wi-Fi adapter is plugged in.** It may move the hotspot onto the adapter. Unplug it first.
+
 ### Repo layout
 
 ```
@@ -82,6 +97,21 @@ www/home/index.html        homepage
   warp-cli --accept-tos disconnect
   ```
 - **Book collections (Water Treatment, Knots, Food for Preppers, Post-Disaster, Medicine) keep loading forever.** These collections store their book list in the browser's local database. iPhone Safari private tabs and the captive portal pop-up window block that. Open them in a normal Safari tab.
+- **The hotspot never comes up and the log says "invalid WPA passphrase length".** Wi-Fi passwords must be 8–63 characters. Fix `hostapd_password` in `/etc/iiab/local_vars.yml` and `wpa_passphrase` in `/etc/hostapd/hostapd.conf`, then `sudo systemctl restart hostapd`.
+- **The hotspot is visible, but devices say "incorrect password" or drop after a few seconds.** The password is probably fine; the hotspot bridge (`br0`) is down. In `sudo journalctl -u hostapd` you see "associated → disassociated" repeating every ~4 seconds. Check:
+  ```bash
+  ip -br addr show br0
+  bridge link
+  ```
+  If `br0` is DOWN and `wlan0` shows `state disabled`, the bridge was not created at boot. Changing connections with `nmcli` can leave the files in `/etc/netplan/90-NM-*.yaml` empty, which removes the bridge. Fix:
+  ```bash
+  sudo mkdir -p /root/netplan-bak && sudo mv /etc/netplan/90-NM-*.yaml /root/netplan-bak/
+  sudo nmcli connection add type bridge ifname br0 con-name iiab-br0 ipv4.method manual ipv4.addresses 10.10.10.10/24 ipv6.method disabled bridge.stp no connection.autoconnect yes
+  sudo nmcli connection up iiab-br0
+  sudo systemctl restart hostapd dnsmasq
+  ```
+  `br0` should now be UP with 10.10.10.10 and `wlan0` should show `state forwarding`.
+- **SSH without a cable:** join the Pi's hotspot and use `ssh user@10.10.10.10`.
 - **Restoring the original homepage:** `sudo cp /library/www/html/home/index.html.iiab-original /library/www/html/home/index.html`
 
 ### License
@@ -139,6 +169,21 @@ sudo ./scripts/download-content.sh
 
 **7. Kullan.** Oluşturduğun Wi-Fi ağına bağlan ve **http://box.lan/home** adresini aç.
 
+### İsteğe bağlı: USB Wi-Fi adaptörüyle internet
+
+Pi'nin dahili Wi-Fi kartı sadece hotspot için kullanılıyor. Pi'nin geçici olarak internete çıkması gerekirse (güncelleme, yeni içerik) ve Ethernet kablosu yoksa ikinci kart olarak ucuz bir USB Wi-Fi adaptörü tak. MediaTek MT7601U yongalı adaptörler kurulumsuz çalışıyor.
+
+1. Adaptörü mümkünse siyah USB 2.0 portlarından birine tak. Mavi USB 3.0 portları 2,4 GHz Wi-Fi'da parazit yapabiliyor.
+2. Bilgisayarını Pi'nin hotspot'una bağla ve SSH ile gir: `ssh kullanici@10.10.10.10`
+3. Adaptörü (genelde `wlan1`) bir Wi-Fi ağına bağla:
+   ```bash
+   nmcli device wifi list ifname wlan1
+   sudo nmcli device wifi connect "AG_ADI" password "SIFRE" ifname wlan1 name gecici-wifi
+   ```
+4. İşin bitince bağlantıyı sil: `sudo nmcli connection delete gecici-wifi`
+
+**USB Wi-Fi adaptörü takılıyken asla `sudo iiab-network` çalıştırma.** Hotspot'u adaptöre taşıyabilir. Önce adaptörü çıkar.
+
 ### Repo yapısı
 
 ```
@@ -166,6 +211,21 @@ www/home/index.html          ana sayfa
   warp-cli --accept-tos disconnect
   ```
 - **Kitap koleksiyonları (Su Arıtma, Düğümler, Gıda, Afet Sonrası, Tıp) sürekli "yükleniyor" diyor.** Bu koleksiyonlar kitap listesini tarayıcının yerel veritabanında tutuyor. iPhone Safari'nin gizli sekmesi ve captive portal penceresi buna izin vermiyor. Normal bir Safari sekmesinde aç.
+- **Hotspot hiç açılmıyor ve kayıtta "invalid WPA passphrase length" yazıyor.** Wi-Fi şifreleri 8–63 karakter olmalı. `/etc/iiab/local_vars.yml` içindeki `hostapd_password` ve `/etc/hostapd/hostapd.conf` içindeki `wpa_passphrase` satırını düzelt, sonra `sudo systemctl restart hostapd` çalıştır.
+- **Hotspot görünüyor ama cihazlar "hatalı şifre" diyor ya da birkaç saniyede kopuyor.** Şifre büyük ihtimalle doğru, sorun hotspot köprüsünün (`br0`) kapalı olması. `sudo journalctl -u hostapd` çıktısında her ~4 saniyede tekrarlanan "associated → disassociated" satırları görürsün. Kontrol et:
+  ```bash
+  ip -br addr show br0
+  bridge link
+  ```
+  `br0` DOWN ve `wlan0` için `state disabled` görünüyorsa köprü açılışta kurulmamış demektir. `nmcli` ile bağlantı eklemek ya da değiştirmek `/etc/netplan/90-NM-*.yaml` dosyalarını boşaltabiliyor, bu da köprüyü siliyor. Çözüm:
+  ```bash
+  sudo mkdir -p /root/netplan-bak && sudo mv /etc/netplan/90-NM-*.yaml /root/netplan-bak/
+  sudo nmcli connection add type bridge ifname br0 con-name iiab-br0 ipv4.method manual ipv4.addresses 10.10.10.10/24 ipv6.method disabled bridge.stp no connection.autoconnect yes
+  sudo nmcli connection up iiab-br0
+  sudo systemctl restart hostapd dnsmasq
+  ```
+  Artık `br0` 10.10.10.10 adresiyle UP, `wlan0` da `state forwarding` görünmeli.
+- **Kablosuz SSH:** Pi'nin hotspot'una bağlan ve `ssh kullanici@10.10.10.10` kullan.
 - **Orijinal ana sayfaya dönmek için:** `sudo cp /library/www/html/home/index.html.iiab-original /library/www/html/home/index.html`
 
 ### Lisans
