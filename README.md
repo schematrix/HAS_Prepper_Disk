@@ -48,7 +48,7 @@ sudo ./scripts/setup-ssd.sh /dev/nvme0n1
 sudo ./install.sh
 ```
 
-**5. Download content.** Edit `config/content.conf` to choose what to download, then run the script below. The defaults need about 150 GB, and downloads can take many hours. If a download is interrupted, re-run the script and it resumes.
+**5. Download content.** Edit `config/content.conf` to choose what to download, then run the script below. The defaults need about 160 GB, and downloads can take many hours. If a download is interrupted, re-run the script and it resumes. The script looks up the newest version of each ZIM in the Kiwix catalog, checks free disk space before each download and verifies every file against its SHA-256 checksum.
 ```bash
 sudo ./scripts/download-content.sh
 ```
@@ -162,7 +162,7 @@ sudo ./scripts/setup-ssd.sh /dev/nvme0n1
 sudo ./install.sh
 ```
 
-**5. İçerikleri indir.** Ne indirileceğini `config/content.conf` dosyasından seç, sonra aşağıdaki betiği çalıştır. Varsayılan liste yaklaşık 150 GB tutar ve indirme saatler sürebilir. İndirme yarıda kalırsa betiği tekrar çalıştırman yeterli, kaldığı yerden devam eder.
+**5. İçerikleri indir.** Ne indirileceğini `config/content.conf` dosyasından seç, sonra aşağıdaki betiği çalıştır. Varsayılan liste yaklaşık 160 GB tutar ve indirme saatler sürebilir. İndirme yarıda kalırsa betiği tekrar çalıştırman yeterli, kaldığı yerden devam eder. Betik her ZIM'in en yeni sürümünü Kiwix kataloğundan bulur, her indirmeden önce boş alanı kontrol eder ve inen dosyayı SHA-256 özetiyle doğrular.
 ```bash
 sudo ./scripts/download-content.sh
 ```
