@@ -1,0 +1,16 @@
+# HAS_PrepperDisk anlamca arama servisi / semantic search service
+# scripts/install-homepage.sh bu dosyayı /etc/systemd/system altına kurar.
+[Unit]
+Description=HAS_PrepperDisk semantic search (Cevher Nüve)
+After=network.target
+
+[Service]
+WorkingDirectory=/library
+ExecStart=/usr/bin/python3 -m search.server
+Restart=on-failure
+# Pi'de model + indeks tek çekirdekte çalışır; 2 GB sınırı düşük RAM'li Pi'leri korur.
+MemoryMax=2G
+Nice=5
+
+[Install]
+WantedBy=multi-user.target

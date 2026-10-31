@@ -72,6 +72,27 @@ The Pi's built-in Wi-Fi is dedicated to the hotspot. If the Pi needs internet te
 
 **Never run `sudo iiab-network` while a USB Wi-Fi adapter is plugged in.** It may move the hotspot onto the adapter. Unplug it first.
 
+### Optional: semantic search (Cevher Nüve)
+
+Kiwix matches words. A question like "kışın evi nasıl ısıtırım" finds nothing in a ZIM whose article is titled "Heat your house with car tyres and earth". Semantic search embeds every article with [Cevher Nüve](https://huggingface.co/batuhanozkose/cevher-nuve) (15M parameters, 256-dimensional, Turkish + English) and answers the question instead.
+
+It is **off by default**. Indexing costs disk space and time, so you choose the books: add `index` to a line in `config/content.conf`, then:
+
+```bash
+sudo ./scripts/download-model.sh   # ~58 MB ONNX weight, no PyTorch needed
+sudo ./scripts/build-index.sh
+sudo ./scripts/install-homepage.sh # search box switches to semantic search
+```
+
+| | |
+|---|---|
+| Index size | 256 bytes per window (int8), ~0.4–0.6 MB per 1,000 articles |
+| Build speed | ~41–67 windows/s per core (≈ 20–33 articles/s on the test packs); `WORKERS=4` scales nearly linearly |
+| RAM at search time | index size + ~60 MB model |
+| Query time | 2.8 ms on a 24k-window index, 34–38 ms on a 359k-window index (1 core) |
+
+Full Wikipedia takes hours to index; start with the survival and health packs. The index is an optional add-on: Kiwix keeps working as before when no ZIM is marked.
+
 ### Repo layout
 
 ```
@@ -79,9 +100,13 @@ install.sh                 main installer
 scripts/setup-ssd.sh       mounts the SSD at /library
 scripts/download-content.sh  downloads/updates ZIM files from Kiwix
 scripts/install-homepage.sh  installs the custom homepage
+scripts/download-model.sh    downloads the semantic search model
+scripts/build-index.sh       indexes the ZIMs marked "index" in content.conf
+search/                      semantic search (index builder, search service)
 config/iiab-overrides.yml  Internet-in-a-Box settings
 config/content.conf        list of content to download
 www/home/index.html        homepage
+www/home/search.html       semantic search results page
 ```
 
 ### Troubleshooting
@@ -186,6 +211,27 @@ Pi'nin dahili Wi-Fi kartı sadece hotspot için kullanılıyor. Pi'nin geçici o
 
 **USB Wi-Fi adaptörü takılıyken asla `sudo iiab-network` çalıştırma.** Hotspot'u adaptöre taşıyabilir. Önce adaptörü çıkar.
 
+### İsteğe bağlı: anlamca arama (Cevher Nüve)
+
+Kiwix kelime eşleştirir. "Kışın evi nasıl ısıtırım" sorusu, makale "Heat your house with car tyres and earth" başlıklıysa hiç sonuç bulmaz. Anlamca arama her makaleyi [Cevher Nüve](https://huggingface.co/batuhanozkose/cevher-nuve) ile vektöre çevirir (15M parametre, 256 boyut, Türkçe + İngilizce) ve soruyu anlamına göre yanıtlar.
+
+**Varsayılan olarak kapalıdır.** İndeks disk ve zaman harcar, o yüzden hangi kitapların indeksleneceğine sen karar verirsin: `config/content.conf` içinde satırın sonuna `index` ekle, sonra:
+
+```bash
+sudo ./scripts/download-model.sh   # ~58 MB ONNX ağırlığı, PyTorch gerekmez
+sudo ./scripts/build-index.sh
+sudo ./scripts/install-homepage.sh # arama kutusu anlamca aramaya geçer
+```
+
+| | |
+|---|---|
+| İndeks boyutu | pencere başına 256 bayt (int8), 1.000 makale başına ~0,4–0,6 MB |
+| İndeksleme hızı | çekirdek başına ~41–67 pencere/s (test paketlerinde ≈ 20–33 makale/s); `WORKERS=4` neredeyse doğrusal ölçeklenir |
+| Arama anında RAM | indeks boyutu + ~60 MB model |
+| Sorgu süresi | 24 bin pencerede 2,8 ms, 359 bin pencerede 34–38 ms (tek çekirdek) |
+
+Tam Vikipedi'nin indekslenmesi saatler sürer; hayatta kalma ve sağlık paketleriyle başla. İndeks isteğe bağlıdır: hiçbir ZIM işaretlenmezse Kiwix eskisi gibi çalışır.
+
 ### Repo yapısı
 
 ```
@@ -193,9 +239,13 @@ install.sh                   ana kurulum betiği
 scripts/setup-ssd.sh         SSD'yi /library klasörüne bağlar
 scripts/download-content.sh  Kiwix'ten ZIM dosyalarını indirir/günceller
 scripts/install-homepage.sh  özel ana sayfayı kurar
+scripts/download-model.sh    anlamca arama modelini indirir
+scripts/build-index.sh       content.conf'ta "index" işaretli ZIM'leri indeksler
+search/                      anlamca arama (indeks kurucu, arama servisi)
 config/iiab-overrides.yml    Internet-in-a-Box ayarları
 config/content.conf          indirilecek içerik listesi
 www/home/index.html          ana sayfa
+www/home/search.html         anlamca arama sonuç sayfası
 ```
 
 ### Sorun giderme

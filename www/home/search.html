@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HAS_PrepperDisk :: Anlamca Ara</title>
+<style>
+  body{margin:0;background:#E5E5E5;color:#000;font-family:Verdana,Tahoma,Arial,sans-serif;font-size:11px}
+  a{color:#006699;text-decoration:none}
+  a:hover{color:#DD6900;text-decoration:underline}
+  .wrap{max-width:980px;margin:0 auto;padding:10px}
+  .bodyline{background:#fff;border:1px solid #98AAB1;padding:8px}
+  .top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:4px 4px 10px}
+  .logo{font-family:"Trebuchet MS",Verdana,sans-serif;font-size:26px;font-weight:bold;color:#006699;letter-spacing:-1px;
+    text-shadow:1px 1px 0 #C7D0D7}
+  .logo span{color:#DD6900}
+  .navlinks{font-size:11px;font-weight:bold}
+  .navlinks a{margin-left:10px}
+  .navlinks a::before{content:"» ";color:#999;font-weight:normal}
+  table.forumline{width:100%;border-collapse:collapse;border:1px solid #006699;background:#fff;margin-bottom:10px}
+  .forumline th{background:linear-gradient(#3F7FAD,#006699);color:#FFA34F;font-size:11px;font-weight:bold;
+    height:24px;padding:0 6px;border:1px solid #fff;border-top:0;white-space:nowrap;text-align:left}
+  .forumline td{padding:6px;border:1px solid #fff}
+  td.row1{background:#EFEFEF}
+  td.row2{background:#DEE3E7}
+  .search td{background:#EFEFEF}
+  .search input[type=text]{font-family:Verdana,sans-serif;font-size:11px;border:1px solid #7F9DB9;padding:2px;width:320px;max-width:100%}
+  .btn{font-family:Verdana,sans-serif;font-size:11px;font-weight:bold;background:#FAFAFA;border:1px solid #000;padding:1px 6px;cursor:pointer}
+  .btn:hover{background:#FFF3D6}
+  .fname{font-size:12px;font-weight:bold}
+  .fdesc{color:#222;margin-top:3px}
+  .small{font-size:10px;color:#444}
+  .score{font-family:monospace;font-weight:bold;color:#DD6900}
+  .bar{height:6px;background:#DDD;border:1px solid #98AAB1;width:90px}
+  .bar i{display:block;height:100%;background:#006699}
+</style>
+</head>
+<body>
+<div class="wrap"><div class="bodyline">
+  <div class="top">
+    <div class="logo">HAS_<span>Prepper</span>Disk</div>
+    <div class="navlinks">
+      <a href="/home">Ana Sayfa</a><a href="/kiwix/">Kütüphane</a><a href="/maps">Haritalar</a>
+    </div>
+  </div>
+
+  <table class="forumline search"><tr><td>
+    <form id="f">
+      <b>Anlamca ara:</b>
+      <input type="text" id="q" placeholder="suyu nasıl arıtırım, güneş fırını...">
+      <input type="submit" class="btn" value="Ara">
+      <span class="small" id="status"></span>
+    </form>
+  </td></tr></table>
+
+  <table class="forumline">
+    <tr><th width="30">#</th><th>Kaynak</th><th width="130">İlgililik</th></tr>
+    <tbody id="hits"></tbody>
+  </table>
+</div></div>
+
+<script>
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const title = p => p.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+const params = new URLSearchParams(location.search);
+
+async function search(q){
+  const status = document.getElementById("status");
+  const hits = document.getElementById("hits");
+  status.textContent = "aranıyor...";
+  const t0 = performance.now();
+  try{
+    const r = await fetch(`/search/api/search?q=${encodeURIComponent(q)}&k=10`);
+    if (!r.ok) throw new Error(r.status);  // servis hata verdiyse Kiwix'e düş
+    const data = await r.json();
+    hits.innerHTML = data.hits.map((h, i) => `
+      <tr>
+        <td class="row1" width="30">${i + 1}</td>
+        <td class="row1"><a class="fname" href="${esc(h.url)}">${esc(title(h.path))}</a>
+          <div class="fdesc">${esc(h.zim.replace(/_\d{4}-\d{2}[a-z]?\.zim$/, ""))} &middot; ${esc(h.path)}</div></td>
+        <td class="row2" width="130"><span class="score">${h.score.toFixed(3)}</span>
+          <div class="bar"><i style="width:${Math.max(0, Math.min(1, h.score)) * 100}%"></i></div></td>
+      </tr>`).join("") || `<tr><td class="row1" colspan="3">Sonuç yok.</td></tr>`;
+    status.textContent = `${data.hits.length} sonuç, ${data.ms} ms (toplam ${Math.round(performance.now() - t0)} ms)`
+      + (params.get("book") ? " · tüm indekslenmiş kaynaklarda" : "");
+  }catch(e){
+    // Servis yoksa Kiwix'in kelime aramasına düş / fall back to Kiwix keyword search
+    status.textContent = "Anlamca arama servisi kapalı, Kiwix aramasına yönlendiriliyor...";
+    location.href = `/kiwix/search?pattern=${encodeURIComponent(q)}`;
+  }
+}
+
+document.getElementById("f").addEventListener("submit", e => {
+  e.preventDefault();
+  const q = document.getElementById("q").value.trim();
+  if (!q) return;
+  history.replaceState(null, "", `?q=${encodeURIComponent(q)}`);
+  search(q);
+});
+
+// Ana sayfadaki kitap seçimi anlamca aramada kullanılmaz; arama tüm indekste yapılır.
+const q0 = params.get("q");
+if (q0){ document.getElementById("q").value = q0; search(q0); }
+</script>
+</body>
+</html>
