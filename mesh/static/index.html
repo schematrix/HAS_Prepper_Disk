@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HAS_PrepperDisk :: Mesh Sohbet</title>
+<style>
+  body{margin:0;background:#E5E5E5;color:#000;font-family:Verdana,Tahoma,Arial,sans-serif;font-size:12px}
+  a{color:#006699;text-decoration:none}
+  a:hover{color:#DD6900;text-decoration:underline}
+  .wrap{max-width:780px;margin:0 auto;padding:10px}
+  .bodyline{background:#fff;border:1px solid #98AAB1;padding:8px}
+
+  .top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:4px 4px 8px}
+  .logo{font-family:"Trebuchet MS",Verdana,sans-serif;font-size:24px;font-weight:bold;color:#006699;letter-spacing:-1px;text-shadow:1px 1px 0 #C7D0D7}
+  .logo span{color:#DD6900}
+  .slogan{font-size:11px;color:#555;margin-top:2px}
+  .navlinks{font-size:11px;font-weight:bold}
+  .navlinks a{margin-left:10px}
+  .navlinks a::before{content:"» ";color:#999;font-weight:normal}
+
+  table.forumline{width:100%;border-collapse:collapse;border:1px solid #006699;background:#fff;margin-bottom:10px}
+  .forumline th{background:linear-gradient(#3F7FAD,#006699);color:#FFA34F;font-size:11px;font-weight:bold;height:24px;padding:0 6px;text-align:left}
+  .forumline td{padding:6px;border:1px solid #fff;vertical-align:top}
+  td.row1{background:#EFEFEF} td.row2{background:#DEE3E7}
+
+  .status{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:11px}
+  .dot{width:9px;height:9px;border-radius:50%;background:#999;display:inline-block;border:1px solid #fff;box-shadow:0 0 0 1px #888}
+  .dot.on{background:#3BA33B} .dot.off{background:#E2451D}
+
+  #log{height:55vh;min-height:260px;overflow-y:auto;background:#F7F7F7;padding:6px}
+  .msg{background:#fff;border:1px solid #C7D0D7;border-radius:2px;padding:5px 7px;margin:0 0 6px;max-width:88%;word-wrap:break-word;overflow-wrap:anywhere}
+  .msg.out{margin-left:auto;background:#FFF6E3;border-color:#E8C88A}
+  .msg.dm{border-left:3px solid #DD6900}
+  .meta{font-size:10px;color:#666;margin-bottom:2px}
+  .meta b{color:#006699;font-size:11px}
+  .msg.out .meta b{color:#B25500}
+  .text{font-size:13px;white-space:pre-wrap}
+  .st{font-size:10px;color:#666;text-align:right;margin-top:2px}
+  .st.ok{color:#2E7D32} .st.bad{color:#C62828}
+  .day{text-align:center;font-size:10px;color:#777;margin:8px 0}
+  .empty{color:#777;text-align:center;padding:30px 10px;line-height:1.7}
+
+  form#send{display:flex;flex-direction:column;gap:6px}
+  .line{display:flex;gap:6px;align-items:center}
+  input[type=text],textarea{font-family:Verdana,sans-serif;font-size:13px;border:1px solid #7F9DB9;padding:5px;background:#fff;box-sizing:border-box}
+  #nick{width:130px}
+  #text{flex:1;resize:none;height:44px}
+  .btn{font-family:Verdana,sans-serif;font-size:12px;font-weight:bold;background:#FAFAFA;border:1px solid #000;padding:6px 12px;cursor:pointer;align-self:stretch}
+  .btn:hover{background:#FFF3D6}
+  .btn:disabled{color:#999;border-color:#999;cursor:default;background:#F0F0F0}
+  .small{font-size:10px;color:#555}
+  #count.bad{color:#C62828;font-weight:bold}
+  #err{color:#C62828;font-size:11px;min-height:14px}
+
+  details summary{cursor:pointer;font-weight:bold;color:#006699}
+  table.nodes{width:100%;border-collapse:collapse;margin-top:6px;font-size:11px}
+  table.nodes td,table.nodes th{padding:3px 5px;border-bottom:1px solid #DEE3E7;text-align:left}
+  table.nodes th{color:#555;font-weight:bold;background:none;height:auto;font-size:10px}
+  .copy{text-align:center;font-size:10px;color:#444;margin:12px 0 4px;line-height:1.6}
+  @media (max-width:520px){ #nick{width:100px} .hide-s{display:none} }
+</style>
+</head>
+<body>
+<div class="wrap"><div class="bodyline">
+
+  <div class="top">
+    <div>
+      <div class="logo">HAS_<span>Mesh</span>Sohbet</div>
+      <div class="slogan">LoRa mesh üzerinden internetsiz mesajlaşma</div>
+    </div>
+    <div class="navlinks"><a href="/home">Ana Sayfa</a><a href="/kiwix/">Kütüphane</a></div>
+  </div>
+
+  <table class="forumline">
+    <tr><th>Radyo durumu</th></tr>
+    <tr><td class="row2"><div class="status"><span class="dot" id="dot"></span><span id="state">Kontrol ediliyor…</span></div></td></tr>
+  </table>
+
+  <table class="forumline">
+    <tr><th>Genel kanal</th></tr>
+    <tr><td class="row1" style="padding:0"><div id="log"><div class="empty">Yükleniyor…</div></div></td></tr>
+    <tr><td class="row2">
+      <form id="send" autocomplete="off">
+        <div class="line">
+          <input type="text" id="nick" placeholder="Adın" maxlength="16">
+          <span class="small">Ad, mesajın başına eklenir. Herkes aynı radyoyu kullanır.</span>
+        </div>
+        <div class="line">
+          <textarea id="text" placeholder="Mesaj yaz…" rows="2"></textarea>
+          <button class="btn" id="btn" type="submit">Gönder</button>
+        </div>
+        <div class="line" style="justify-content:space-between">
+          <span id="err"></span>
+          <span class="small"><span id="count">0</span> / <span id="max">200</span> bayt</span>
+        </div>
+      </form>
+    </td></tr>
+  </table>
+
+  <table class="forumline">
+    <tr><th>Ağdaki düğümler</th></tr>
+    <tr><td class="row1">
+      <details id="nodesBox"><summary id="nodesSum">Düğüm yok</summary>
+        <table class="nodes" id="nodes"></table>
+      </details>
+    </td></tr>
+  </table>
+
+  <div class="small" style="line-height:1.6">
+    Mesajlar herkese açık genel kanala gider ve menzildeki tüm Meshtastic cihazlarında görünür.
+    LoRa yavaştır: kısa yaz, aynı mesajı tekrar gönderme. Cihaza özel gelen mesajlar
+    turuncu çizgiyle gösterilir ve bu sayfadaki herkes onları görebilir.
+  </div>
+
+  <div class="copy">HAS_PrepperDisk &middot; Meschy / Meshtastic köprüsü</div>
+</div></div>
+
+<script>
+/* Göreli adresler: sayfa hem /mesh/ altında hem doğrudan çalışır.
+   Relative URLs so the page works both under /mesh/ and directly. */
+const $ = id => document.getElementById(id);
+const log = $("log"), text = $("text"), nick = $("nick"), btn = $("btn");
+const enc = new TextEncoder();
+let lastId = 0, maxBytes = 200, connected = false, cooldownUntil = 0, cooldown = 5;
+const watching = new Map();   // kendi mesajlarımızın durumu / status of our own messages
+let lastDay = "";
+
+const ST = {
+  queued:  ["Sırada…", ""],
+  sent:    ["Gönderildi, aktarılması bekleniyor", ""],
+  relayed: ["✓ Ağda duyuldu", "ok"],
+  unheard: ["✗ Kimse duymadı, menzil dışında olabilir", "bad"],
+  failed:  ["✗ Gönderilemedi", "bad"],
+};
+
+try { nick.value = localStorage.getItem("meshNick") || ""; } catch (e) {}
+nick.addEventListener("change", () => { try { localStorage.setItem("meshNick", nick.value.trim()); } catch (e) {} });
+
+function fullText(){
+  const n = nick.value.trim(), t = text.value.trim();
+  return n ? `${n}: ${t}` : t;
+}
+function updateCount(){
+  const b = enc.encode(fullText()).length;
+  $("count").textContent = b;
+  $("count").classList.toggle("bad", b > maxBytes);
+  btn.disabled = !connected || !text.value.trim() || b > maxBytes || Date.now() < cooldownUntil;
+}
+text.addEventListener("input", updateCount);
+nick.addEventListener("input", updateCount);
+text.addEventListener("keydown", e => {
+  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); $("send").requestSubmit(); }
+});
+
+function el(tag, cls, txt){
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (txt != null) e.textContent = txt;   // asla innerHTML değil / never innerHTML
+  return e;
+}
+function fmtTime(ts){
+  const d = new Date(ts * 1000);
+  return d.toLocaleTimeString("tr-TR", {hour:"2-digit", minute:"2-digit"});
+}
+function fmtAgo(s){
+  if (s == null) return "—";
+  if (s < 60) return "az önce";
+  if (s < 3600) return Math.floor(s/60) + " dk önce";
+  if (s < 86400) return Math.floor(s/3600) + " sa önce";
+  return Math.floor(s/86400) + " gün önce";
+}
+
+function addMessage(m){
+  const day = new Date(m.ts * 1000).toLocaleDateString("tr-TR");
+  if (day !== lastDay) { log.appendChild(el("div", "day", day)); lastDay = day; }
+  const box = el("div", "msg " + m.direction + (m.direction === "in" && m.to_id && m.to_id !== "^all" ? " dm" : ""));
+  const meta = el("div", "meta");
+  if (m.direction === "out") {
+    meta.appendChild(el("b", null, "Bu cihaz"));
+  } else {
+    meta.appendChild(el("b", null, m.from_name || m.from_id || "?"));
+    const extra = [];
+    if (m.to_id && m.to_id !== "^all") extra.push("özel");
+    if (m.hops != null) extra.push(m.hops === 0 ? "doğrudan" : m.hops + " atlama");
+    if (m.snr != null) extra.push("SNR " + Number(m.snr).toFixed(1));
+    if (extra.length) meta.appendChild(document.createTextNode(" · " + extra.join(" · ")));
+  }
+  meta.appendChild(document.createTextNode(" · " + fmtTime(m.ts)));
+  box.appendChild(meta);
+  box.appendChild(el("div", "text", m.text));
+  if (m.direction === "out") {
+    const st = el("div", "st");
+    box.appendChild(st);
+    setStatus(st, m.status);
+    if (m.status === "queued" || m.status === "sent") watching.set(m.id, st);
+  }
+  log.appendChild(box);
+}
+function setStatus(node, status){
+  const [label, cls] = ST[status] || ["", ""];
+  node.textContent = label;
+  node.className = "st " + cls;
+}
+
+async function pollMessages(){
+  try {
+    const watch = [...watching.keys()].join(",");
+    const r = await fetch(`api/messages?after=${lastId}&watch=${watch}`, {cache: "no-store"});
+    const data = await r.json();
+    const atBottom = log.scrollHeight - log.scrollTop - log.clientHeight < 40;
+    if (lastId === 0) {
+      log.textContent = "";
+      if (!data.messages.length) {
+        const e = el("div", "empty");
+        e.append("Henüz mesaj yok.", document.createElement("br"), "Menzildeki biri yazdığında burada görünecek.");
+        e.id = "emptyNote";
+        log.appendChild(e);
+      }
+    }
+    if (data.messages.length) { const n = $("emptyNote"); if (n) n.remove(); }
+    for (const m of data.messages) { addMessage(m); lastId = Math.max(lastId, m.id); }
+    for (const [id, status] of Object.entries(data.statuses || {})) {
+      const node = watching.get(Number(id));
+      if (!node) continue;
+      setStatus(node, status);
+      if (status !== "queued" && status !== "sent") watching.delete(Number(id));
+    }
+    if (data.messages.length && (atBottom || lastId === data.messages[data.messages.length-1].id)) {
+      log.scrollTop = log.scrollHeight;
+    }
+  } catch (e) { /* servis yeniden başlıyor olabilir / service may be restarting */ }
+}
+
+async function pollStatus(){
+  try {
+    const s = await (await fetch("api/status", {cache: "no-store"})).json();
+    connected = s.connected;
+    maxBytes = s.maxBytes || maxBytes;
+    if (s.cooldown != null) cooldown = s.cooldown;
+    $("max").textContent = maxBytes;
+    $("dot").className = "dot " + (s.connected ? "on" : "off");
+    $("state").textContent = s.connected
+      ? `Bağlı: ${s.me && (s.me.longName || s.me.id) || "Meshtastic"} (${s.me && s.me.id || ""}) · ${s.nodes.length} düğüm biliniyor`
+      : (s.error || "Radyo bağlı değil");
+    renderNodes(s.nodes || []);
+  } catch (e) {
+    connected = false;
+    $("dot").className = "dot off";
+    $("state").textContent = "Mesh servisine ulaşılamıyor";
+  }
+  updateCount();
+}
+
+function renderNodes(nodes){
+  const recent = nodes.filter(n => n.ago != null && n.ago < 7200).length;
+  $("nodesSum").textContent = nodes.length
+    ? `${nodes.length} düğüm (${recent} tanesi son 2 saatte duyuldu)`
+    : "Henüz düğüm duyulmadı";
+  const t = $("nodes");
+  t.textContent = "";
+  if (!nodes.length) return;
+  const head = t.insertRow();
+  for (const h of ["Ad", "Son duyulma", "Atlama", "SNR", "Pil"]) {
+    const th = el("th", h === "SNR" || h === "Pil" ? "hide-s" : null, h); head.appendChild(th);
+  }
+  for (const n of nodes) {
+    const r = t.insertRow();
+    r.appendChild(el("td", null, n.longName + (n.shortName ? ` (${n.shortName})` : "")));
+    r.appendChild(el("td", null, fmtAgo(n.ago)));
+    r.appendChild(el("td", null, n.hops == null ? "—" : String(n.hops)));
+    r.appendChild(el("td", "hide-s", n.snr == null ? "—" : Number(n.snr).toFixed(1)));
+    r.appendChild(el("td", "hide-s", n.battery == null ? "—" : (n.battery > 100 ? "USB" : n.battery + "%")));
+  }
+}
+
+$("send").addEventListener("submit", async e => {
+  e.preventDefault();
+  if (btn.disabled) return;
+  $("err").textContent = "";
+  btn.disabled = true;
+  try {
+    const r = await fetch("api/send", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({name: nick.value.trim(), text: text.value.trim()}),
+    });
+    const data = await r.json();
+    if (!r.ok) {
+      $("err").textContent = data.error || "Gönderilemedi";
+      if (data.retryAfter) { cooldownUntil = Date.now() + data.retryAfter * 1000; setTimeout(updateCount, data.retryAfter * 1000 + 50); }
+    } else {
+      text.value = "";
+      cooldownUntil = Date.now() + 1000 * cooldown;
+      setTimeout(updateCount, 1000 * cooldown + 50);
+      await pollMessages();
+      log.scrollTop = log.scrollHeight;
+    }
+  } catch (err) {
+    $("err").textContent = "Servise ulaşılamadı";
+  }
+  updateCount();
+});
+
+pollStatus().then(pollMessages);
+setInterval(pollMessages, 3000);
+setInterval(pollStatus, 15000);
+</script>
+</body>
+</html>

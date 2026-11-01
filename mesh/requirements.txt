@@ -1,0 +1,1 @@
+meshtastic>=2.7,<3

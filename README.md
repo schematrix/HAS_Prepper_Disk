@@ -72,6 +72,20 @@ The Pi's built-in Wi-Fi is dedicated to the hotspot. If the Pi needs internet te
 
 **Never run `sudo iiab-network` while a USB Wi-Fi adapter is plugged in.** It may move the hotspot onto the adapter. Unplug it first.
 
+### Optional: mesh chat with Meschy
+
+Plug a [Meschy](https://github.com/schematrix/meschy) (or any Meshtastic node) into the Pi and everyone on the hotspot can send and read LoRa mesh messages from a browser, with no Meshtastic app. Messages are saved on the SSD, so people who join later still see the history. LoRa carries short text only; it cannot share Wikipedia pages or maps.
+
+1. Flash Meshtastic on the Meschy and set the region to `EU_868` with the Meshtastic app (see the Meschy README).
+2. Plug it into a black USB 2.0 port. Keep the antenna outside any metal case.
+3. Install (needs internet once):
+   ```bash
+   sudo ./scripts/install-meshchat.sh
+   ```
+4. Open **http://box.lan/mesh/**. The homepage also gets a "Mesh Sohbet" entry.
+
+Everyone on the page shares the Pi's radio, so each message starts with the sender's nickname. Messages go to the primary channel; direct messages to the Pi's node are shown to everyone on the page. Settings live in `/etc/default/has-meshchat`, logs in `journalctl -u has-meshchat`.
+
 ### Repo layout
 
 ```
@@ -82,6 +96,8 @@ scripts/install-homepage.sh  installs the custom homepage
 config/iiab-overrides.yml  Internet-in-a-Box settings
 config/content.conf        list of content to download
 www/home/index.html        homepage
+scripts/install-meshchat.sh  installs the mesh chat bridge (optional)
+mesh/                      mesh chat service, page, systemd and nginx files
 ```
 
 ### Troubleshooting
@@ -186,6 +202,20 @@ Pi'nin dahili Wi-Fi kartı sadece hotspot için kullanılıyor. Pi'nin geçici o
 
 **USB Wi-Fi adaptörü takılıyken asla `sudo iiab-network` çalıştırma.** Hotspot'u adaptöre taşıyabilir. Önce adaptörü çıkar.
 
+### İsteğe bağlı: Meschy ile mesh sohbet
+
+Pi'ye bir [Meschy](https://github.com/schematrix/meschy) (ya da herhangi bir Meshtastic cihazı) takarsan, hotspot'a bağlanan herkes Meshtastic uygulaması olmadan tarayıcıdan LoRa mesh ağına mesaj atıp okuyabilir. Mesajlar SSD'ye kaydedilir, sonradan bağlanan da geçmişi görür. LoRa sadece kısa metin taşır; Wikipedia sayfası ya da harita paylaşamaz.
+
+1. Meschy'ye Meshtastic yükle ve Meshtastic uygulamasından bölgeyi `EU_868` yap (Meschy README'sine bak).
+2. Siyah USB 2.0 portuna tak. Anten metal bir kasanın içinde kalmasın.
+3. Kur (bir kereliğine internet gerekir):
+   ```bash
+   sudo ./scripts/install-meshchat.sh
+   ```
+4. **http://box.lan/mesh/** adresini aç. Ana sayfaya da "Mesh Sohbet" bölümü eklenir.
+
+Sayfadaki herkes Pi'nin radyosunu ortak kullanır, bu yüzden her mesajın başına gönderenin takma adı eklenir. Mesajlar birincil kanala gider; Pi'nin cihazına gelen özel mesajlar sayfadaki herkese görünür. Ayarlar `/etc/default/has-meshchat` dosyasında, kayıtlar `journalctl -u has-meshchat` ile görülür.
+
 ### Repo yapısı
 
 ```
@@ -196,6 +226,8 @@ scripts/install-homepage.sh  özel ana sayfayı kurar
 config/iiab-overrides.yml    Internet-in-a-Box ayarları
 config/content.conf          indirilecek içerik listesi
 www/home/index.html          ana sayfa
+scripts/install-meshchat.sh  mesh sohbet köprüsünü kurar (isteğe bağlı)
+mesh/                        mesh sohbet servisi, sayfası, systemd ve nginx dosyaları
 ```
 
 ### Sorun giderme
