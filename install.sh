@@ -70,7 +70,7 @@ else
   if command -v iiab >/dev/null; then
     iiab
   else
-    curl -fsSL d.iiab.io/install.txt | bash
+    curl -fsSL https://d.iiab.io/install.txt | bash
   fi
   [ -f /etc/iiab/install-flags/iiab-complete ] || die "Kurulum bitmedi / install not finished. Tekrar çalıştır / run again: sudo ./install.sh"
 fi
