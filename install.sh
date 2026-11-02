@@ -85,6 +85,7 @@ cat <<EOF
 Ana sayfa / homepage:     http://$IP/home   (hotspot üzerinden / via hotspot: http://box.lan/home)
 Yönetim / admin console:  http://$IP/admin  (kullanıcı / user: iiab-admin)
 
-Sıradaki adım / next step: içerikleri indir / download content
+Sıradaki adım / next step: içerikleri ve toplanma alanlarını indir / download content and assembly points
   sudo ./scripts/download-content.sh
+  sudo ./scripts/toplanma.py guncelle
 EOF

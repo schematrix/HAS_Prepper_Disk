@@ -57,6 +57,19 @@ sudo ./scripts/download-content.sh
 
 **7. Use it.** Join the Wi-Fi network you created and open **http://box.lan/home**.
 
+### Assembly points
+
+**http://box.lan/home/toplanma.html** ("Toplanma Alanları" on the homepage) lists disaster assembly points, searchable by neighbourhood or town name (Turkish letters fold, `cankaya` finds `Çankaya`). Each point shows its coordinates and a link that opens the phone's map app (works offline if the app has offline maps). Download the list once while the Pi has internet (about 100 KB, the download itself ~15 MB):
+```bash
+sudo ./scripts/toplanma.py guncelle
+```
+**The list is incomplete.** It comes from OpenStreetMap, which has only about 700 assembly points in Turkey, most of them around Istanbul, Tekirdağ and Kocaeli; AFAD's official list is not openly licensed. Look up the official points for your area on e-Devlet ("Afet ve Acil Durum Toplanma Alanı Sorgulama") and add them; they show first, highlighted:
+```bash
+sudo ./scripts/toplanma.py ekle "Okul bahçesi" 37.5753 36.9228
+./scripts/toplanma.py liste
+sudo ./scripts/toplanma.py sil 1
+```
+
 ### Optional: internet over a USB Wi-Fi adapter
 
 The Pi's built-in Wi-Fi is dedicated to the hotspot. If the Pi needs internet temporarily (updates, new content) and there is no Ethernet cable, add a cheap USB Wi-Fi adapter as a second card. Adapters with the MediaTek MT7601U chip work out of the box.
@@ -79,9 +92,11 @@ install.sh                 main installer
 scripts/setup-ssd.sh       mounts the SSD at /library
 scripts/download-content.sh  downloads/updates ZIM files from Kiwix
 scripts/install-homepage.sh  installs the custom homepage
+scripts/toplanma.py        downloads assembly points, adds your own
 config/iiab-overrides.yml  Internet-in-a-Box settings
 config/content.conf        list of content to download
 www/home/index.html        homepage
+www/home/toplanma.html     assembly points page
 ```
 
 ### Troubleshooting
@@ -171,6 +186,19 @@ sudo ./scripts/download-content.sh
 
 **7. Kullan.** Oluşturduğun Wi-Fi ağına bağlan ve **http://box.lan/home** adresini aç.
 
+### Toplanma alanları
+
+**http://box.lan/home/toplanma.html** (ana sayfada "Toplanma Alanları") afet toplanma alanlarını listeler; mahalle ya da ilçe adıyla aranır (Türkçe harflere takılmaz, `cankaya` yazınca `Çankaya` bulunur). Her alanın koordinatı ve telefondaki harita uygulamasını açan bir bağlantı vardır (uygulamada çevrimdışı harita iniyse internet gerekmez). Listeyi Pi internete bağlıyken bir kez indir (yaklaşık 100 KB, indirme ~15 MB):
+```bash
+sudo ./scripts/toplanma.py guncelle
+```
+**Liste eksiktir.** OpenStreetMap'ten gelir ve Türkiye'de yalnızca 700 kadar toplanma alanı vardır, çoğu İstanbul, Tekirdağ ve Kocaeli'de; AFAD'ın resmi listesi açık lisanslı değil. Bölgendeki resmi alanları e-Devlet'te "Afet ve Acil Durum Toplanma Alanı Sorgulama" ile bul ve ekle; eklediklerin listenin başında, renkli görünür:
+```bash
+sudo ./scripts/toplanma.py ekle "Okul bahçesi" 37.5753 36.9228
+./scripts/toplanma.py liste
+sudo ./scripts/toplanma.py sil 1
+```
+
 ### İsteğe bağlı: USB Wi-Fi adaptörüyle internet
 
 Pi'nin dahili Wi-Fi kartı sadece hotspot için kullanılıyor. Pi'nin geçici olarak internete çıkması gerekirse (güncelleme, yeni içerik) ve Ethernet kablosu yoksa ikinci kart olarak ucuz bir USB Wi-Fi adaptörü tak. MediaTek MT7601U yongalı adaptörler kurulumsuz çalışıyor.
@@ -193,9 +221,11 @@ install.sh                   ana kurulum betiği
 scripts/setup-ssd.sh         SSD'yi /library klasörüne bağlar
 scripts/download-content.sh  Kiwix'ten ZIM dosyalarını indirir/günceller
 scripts/install-homepage.sh  özel ana sayfayı kurar
+scripts/toplanma.py          toplanma alanlarını indirir, kendi alanlarını ekler
 config/iiab-overrides.yml    Internet-in-a-Box ayarları
 config/content.conf          indirilecek içerik listesi
 www/home/index.html          ana sayfa
+www/home/toplanma.html       toplanma alanları sayfası
 ```
 
 ### Sorun giderme
