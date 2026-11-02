@@ -72,6 +72,17 @@ The Pi's built-in Wi-Fi is dedicated to the hotspot. If the Pi needs internet te
 
 **Never run `sudo iiab-network` while a USB Wi-Fi adapter is plugged in.** It may move the hotspot onto the adapter. Unplug it first.
 
+### Disk and power health
+
+Every 6 hours (and 5 minutes after boot) `scripts/disk-health.sh` checks the `/library` disk and the Pi's power supply. If something is wrong, a red warning appears at the top of the homepage:
+
+- the disk was remounted read-only or has file system errors,
+- the disk's own SMART test reports a failure or pre-failure, or an NVMe SSD has used 90% of its life,
+- the disk is 95% full,
+- the Pi is running on, or has had, under-voltage (a weak power supply or battery can corrupt the disk).
+
+Check now: `sudo ./scripts/disk-health.sh`. Disks behind some USB adapters don't report SMART; those checks are then skipped silently.
+
 ### Repo layout
 
 ```
@@ -79,6 +90,7 @@ install.sh                 main installer
 scripts/setup-ssd.sh       mounts the SSD at /library
 scripts/download-content.sh  downloads/updates ZIM files from Kiwix
 scripts/install-homepage.sh  installs the custom homepage
+scripts/disk-health.sh     disk and power health check (saglik/: its systemd timer)
 config/iiab-overrides.yml  Internet-in-a-Box settings
 config/content.conf        list of content to download
 www/home/index.html        homepage
@@ -186,6 +198,17 @@ Pi'nin dahili Wi-Fi kartı sadece hotspot için kullanılıyor. Pi'nin geçici o
 
 **USB Wi-Fi adaptörü takılıyken asla `sudo iiab-network` çalıştırma.** Hotspot'u adaptöre taşıyabilir. Önce adaptörü çıkar.
 
+### Disk ve güç sağlığı
+
+`scripts/disk-health.sh` 6 saatte bir (ve açılıştan 5 dakika sonra) `/library` diskine ve Pi'nin güç kaynağına bakar. Bir sorun varsa ana sayfanın en üstünde kırmızı bir uyarı çıkar:
+
+- disk salt okunur moda geçmiş ya da dosya sisteminde hata var,
+- diskin kendi SMART testi arıza ya da arıza öncesi belirti bildiriyor, veya NVMe SSD ömrünün %90'ı dolmuş,
+- disk %95 dolu,
+- Pi düşük voltajla çalışıyor ya da çalıştı (zayıf güç kaynağı ya da pil diski bozabilir).
+
+Hemen kontrol: `sudo ./scripts/disk-health.sh`. Bazı USB adaptörlerinin arkasındaki diskler SMART bilgisi vermez; o zaman bu kontrol sessizce atlanır.
+
 ### Repo yapısı
 
 ```
@@ -193,6 +216,7 @@ install.sh                   ana kurulum betiği
 scripts/setup-ssd.sh         SSD'yi /library klasörüne bağlar
 scripts/download-content.sh  Kiwix'ten ZIM dosyalarını indirir/günceller
 scripts/install-homepage.sh  özel ana sayfayı kurar
+scripts/disk-health.sh       disk ve güç sağlığı denetimi (saglik/: systemd zamanlayıcısı)
 config/iiab-overrides.yml    Internet-in-a-Box ayarları
 config/content.conf          indirilecek içerik listesi
 www/home/index.html          ana sayfa
