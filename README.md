@@ -72,6 +72,10 @@ The Pi's built-in Wi-Fi is dedicated to the hotspot. If the Pi needs internet te
 
 **Never run `sudo iiab-network` while a USB Wi-Fi adapter is plugged in.** It may move the hotspot onto the adapter. Unplug it first.
 
+### Power saving
+
+Without mains power the box runs on a power bank or battery. `sudo ./scripts/guc.sh tasarruf` stops the services a disaster box doesn't need (Kolibri, Sugarizer and its MongoDB, Calibre-Web, Transmission, Tailscale, Bluetooth, CUPS; whichever are installed) and caps the CPU at 1.5 GHz. Kiwix, the homepage, maps, the hotspot and the HAS services stay on, and the homepage shows that power saving is on. `sudo ./scripts/guc.sh normal` starts again exactly what it stopped. The mode survives reboots. `./scripts/guc.sh durum` shows the mode and, on a Pi 5, the board power measured by its power chip (USB devices and the SSD not included), so you can compare both modes on your own box.
+
 ### Repo layout
 
 ```
@@ -79,6 +83,8 @@ install.sh                 main installer
 scripts/setup-ssd.sh       mounts the SSD at /library
 scripts/download-content.sh  downloads/updates ZIM files from Kiwix
 scripts/install-homepage.sh  installs the custom homepage
+scripts/guc.sh             power saving mode
+scripts/install-guc.sh     installs the power saving mode
 config/iiab-overrides.yml  Internet-in-a-Box settings
 config/content.conf        list of content to download
 www/home/index.html        homepage
@@ -186,6 +192,10 @@ Pi'nin dahili Wi-Fi kartı sadece hotspot için kullanılıyor. Pi'nin geçici o
 
 **USB Wi-Fi adaptörü takılıyken asla `sudo iiab-network` çalıştırma.** Hotspot'u adaptöre taşıyabilir. Önce adaptörü çıkar.
 
+### Güç tasarrufu
+
+Elektrik yokken kutu powerbank ya da aküyle çalışır. `sudo ./scripts/guc.sh tasarruf` afette gerekmeyen servisleri (Kolibri, Sugarizer ve MongoDB'si, Calibre-Web, Transmission, Tailscale, Bluetooth, CUPS; hangileri kuruluysa) kapatır ve işlemciyi 1,5 GHz ile sınırlar. Kiwix, ana sayfa, harita, hotspot ve HAS servisleri açık kalır; ana sayfada güç tasarrufunun açık olduğu yazar. `sudo ./scripts/guc.sh normal` yalnızca kapattıklarını geri açar. Mod yeniden başlatınca da korunur. `./scripts/guc.sh durum` modu ve Pi 5'te güç yongasının ölçtüğü kart gücünü (USB cihazları ve SSD hariç) gösterir; iki modu kendi kutunda karşılaştırabilirsin.
+
 ### Repo yapısı
 
 ```
@@ -193,6 +203,8 @@ install.sh                   ana kurulum betiği
 scripts/setup-ssd.sh         SSD'yi /library klasörüne bağlar
 scripts/download-content.sh  Kiwix'ten ZIM dosyalarını indirir/günceller
 scripts/install-homepage.sh  özel ana sayfayı kurar
+scripts/guc.sh               güç tasarrufu modu
+scripts/install-guc.sh       güç tasarrufu modunu kurar
 config/iiab-overrides.yml    Internet-in-a-Box ayarları
 config/content.conf          indirilecek içerik listesi
 www/home/index.html          ana sayfa

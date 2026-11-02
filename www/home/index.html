@@ -23,6 +23,7 @@
 
   .crumb{font-weight:bold;font-size:12px;margin:8px 2px}
   .small{font-size:10px;color:#444}
+  #guc{color:#B00000;font-weight:bold}
 
   /* tablolar */
   .scroll{overflow-x:auto}
@@ -91,6 +92,7 @@
 
   <div class="crumb"><a href="/home">HAS_PrepperDisk Ana Sayfa</a></div>
   <div class="small" style="margin:0 2px 6px" id="now"></div>
+  <div class="small" style="margin:0 2px 6px" id="guc" hidden></div>
 
   <div class="scroll">
   <table class="forumline" id="forums">
@@ -240,6 +242,14 @@ function render(books){
 const d = new Date();
 document.getElementById("now").textContent =
   "Sunucu saati: " + d.toLocaleDateString("tr-TR") + " " + d.toLocaleTimeString("tr-TR",{hour:"2-digit",minute:"2-digit"});
+
+/* scripts/guc.sh tasarruf yazar: bazı servisler kapalıysa kullanıcı nedenini görsün. */
+fetch("/home/guc.json", {cache:"no-store"}).then(r => r.ok ? r.json() : null).then(g => {
+  if (!g) return;
+  const box = document.getElementById("guc");
+  box.textContent = "Güç tasarrufu açık." + (g.kapali.length ? " Kapalı: " + g.kapali.join(", ") + "." : "");
+  box.hidden = false;
+}).catch(() => {});
 
 document.getElementById("search").addEventListener("submit", e => {
   e.preventDefault();

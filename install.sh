@@ -78,6 +78,7 @@ fi
 # -------------------------------------------------------------- 3. ana sayfa
 say "3/3 Ana sayfa / homepage"
 "$REPO/scripts/install-homepage.sh"
+"$REPO/scripts/install-guc.sh"
 
 IP=$(hostname -I | awk '{print $1}')
 say "Bitti / done"

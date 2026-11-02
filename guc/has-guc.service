@@ -1,0 +1,9 @@
+[Unit]
+Description=HAS_PrepperDisk: açılışta güç tasarrufu ayarını uygula / reapply power saving at boot
+
+[Service]
+Type=oneshot
+ExecStart=/opt/has-guc/guc.sh uygula
+
+[Install]
+WantedBy=multi-user.target
