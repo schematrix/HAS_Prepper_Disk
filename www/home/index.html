@@ -76,7 +76,7 @@
       <div class="slogan">Çevrimdışı bilgi arşivi &mdash; internet olmasa da açık</div>
     </div>
     <div class="navlinks">
-      <a href="/kiwix/">Kütüphane</a><a href="/maps">Haritalar</a><a href="/admin">Yönetim</a>
+      <a href="/kiwix/">Kütüphane</a><a href="/maps">Haritalar</a><a href="/mesh/">Mesh Sohbet</a><a href="/admin">Yönetim</a>
     </div>
   </div>
 
@@ -125,6 +125,7 @@
    zim: Kiwix dosya adının tarihsiz başı. Sayfa, cihazda hangi sürümün
         yüklü olduğunu Kiwix kataloğundan kendisi bulur.
    url: zim olmayan servisler için sabit adres.
+   mesh: mesh sohbet servisi; kurulu değilse gri görünür (scripts/install-meshchat.sh).
    Cihazda bulunamayan ZIM'ler gri klasörle "henüz yüklenmedi" görünür. */
 const CATS = [
   { title:"Ansiklopedi", items:[
@@ -133,6 +134,9 @@ const CATS = [
   ]},
   { title:"Haritalar ve Navigasyon", items:[
     { name:"Dünya Haritası", desc:"Avrupa ve Orta Doğu sokak seviyesinde, dünyanın geri kalanı şehir seviyesinde.", lang:"—", size:"~40 GB", url:"/maps" },
+  ]},
+  { title:"Haberleşme", items:[
+    { name:"Mesh Sohbet", desc:"Meschy / Meshtastic LoRa ağı üzerinden internetsiz mesajlaşma.", lang:"TR", size:"—", url:"/mesh/", mesh:true },
   ]},
   { title:"Hayatta Kalma ve Hazırlık", items:[
     { name:"Afet Sonrası Kitaplığı", desc:"Barınak, enerji, tarım ve yeniden yapılanma üzerine kitaplar.", lang:"EN", size:"~615 MB", zim:"zimgit-post-disaster_en", search:true },
@@ -184,7 +188,15 @@ async function loadBooks(){
   }catch(e){ return null; }
 }
 
-function render(books){
+/* Mesh sohbet servisi kurulu mu, radyo bağlı mı? / is mesh chat installed, radio connected? */
+async function loadMesh(){
+  try{
+    const r = await fetch("/mesh/api/status", {cache:"no-store"});
+    return r.ok ? await r.json() : null;
+  }catch(e){ return null; }
+}
+
+function render(books, mesh){
   let html = "", ready = 0, total = 0;
   const used = new Set();
   const sel = document.getElementById("book");
@@ -193,6 +205,10 @@ function render(books){
     for (const i of c.items) {
       total++;
       let url = i.url || null, status = i.url ? "Kurulu" : "Henüz yüklenmedi";
+      if (i.mesh) {
+        if (!mesh) { url = null; status = "Henüz kurulmadı"; }
+        else status = mesh.connected ? `Radyo bağlı, ${mesh.nodes.length} düğüm` : "Radyo bağlı değil";
+      }
       if (i.zim) {
         if (books === null) { url = "/kiwix/"; status = "Kütüphaneden açın"; }
         else {
@@ -251,7 +267,7 @@ document.getElementById("search").addEventListener("submit", e => {
     : `/kiwix/search?pattern=${encodeURIComponent(q)}`;
 });
 
-loadBooks().then(render);
+Promise.all([loadBooks(), loadMesh()]).then(([books, mesh]) => render(books, mesh));
 </script>
 </body>
 </html>

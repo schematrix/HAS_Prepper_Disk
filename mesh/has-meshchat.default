@@ -1,0 +1,24 @@
+# HAS_PrepperDisk mesh sohbet ayarları / mesh chat settings
+# Değiştirdikten sonra / after editing:  sudo systemctl restart has-meshchat
+
+# Seri port. Boş bırakılırsa otomatik bulunur. Birden fazla USB seri cihaz varsa
+# /dev/serial/by-id/ altındaki tam yolu yaz.
+# Serial port; empty = auto-detect. With several USB serial devices, use the
+# full path under /dev/serial/by-id/.
+MESHCHAT_DEVICE=
+
+# Mesajların gönderileceği kanal (0 = birincil kanal)
+# Channel index to send on (0 = primary channel)
+MESHCHAT_CHANNEL=0
+
+# Takma ad dahil en fazla bayt (Meshtastic sınırı ~228)
+# Max bytes including the nickname (Meshtastic limit ~228)
+MESHCHAT_MAX_BYTES=200
+
+# Aynı cihazdan iki mesaj arasında beklenecek saniye (mesh'i korur)
+# Seconds a client must wait between messages (protects the mesh)
+MESHCHAT_COOLDOWN=5
+
+MESHCHAT_DB=/library/meshchat/meshchat.db
+MESHCHAT_HOST=127.0.0.1
+MESHCHAT_PORT=8095
