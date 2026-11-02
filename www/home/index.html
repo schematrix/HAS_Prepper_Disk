@@ -213,7 +213,7 @@ function render(books){
       if (i.zim) {
         if (books === null) { url = "/kiwix/"; status = "Kütüphaneden açın"; }
         else {
-          const b = books.filter(b => b.id.startsWith(i.zim)).sort((a,z) => a.id < z.id ? 1 : -1)[0];
+          const b = books.filter(b => b.id.startsWith(i.zim + "_")).sort((a,z) => a.id < z.id ? 1 : -1)[0];
           if (b) {
             used.add(b.id);
             url = b.href;
