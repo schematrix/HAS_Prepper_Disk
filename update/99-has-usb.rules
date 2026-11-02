@@ -1,0 +1,2 @@
+# USB disk takılınca içerik taraması / scan a USB drive for content when it is plugged in
+ACTION=="add", SUBSYSTEM=="block", ENV{ID_BUS}=="usb", ENV{ID_FS_USAGE}=="filesystem", TAG+="systemd", ENV{SYSTEMD_WANTS}+="has-usb@%k.service"

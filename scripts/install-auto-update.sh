@@ -11,7 +11,7 @@ REPO="$(cd "$(dirname "$0")/.." && pwd)"
 SRC="$REPO/update"
 APP=/opt/has-update
 NGINX_CONF=/etc/nginx/conf.d/has-update-nginx.conf
-UNITS="has-update-check.service has-update-check.timer has-update-apply.service has-update-apply.path has-update-api.service"
+UNITS="has-update-check.service has-update-check.timer has-update-apply.service has-update-apply.path has-update-api.service has-usb@.service"
 
 die(){ echo "HATA / ERROR: $*" >&2; exit 1; }
 [ "$EUID" -eq 0 ] || die "sudo ile çalıştır / run with sudo: sudo ./scripts/install-auto-update.sh"
@@ -32,8 +32,13 @@ else
   echo "Uyarı / warning: NetworkManager yok, kontrol yalnızca günde bir yapılır / no NetworkManager, checks run daily only"
 fi
 
+install -m 644 "$SRC/99-has-usb.rules" /etc/udev/rules.d/99-has-usb.rules
+udevadm control --reload
+ln -sfn /run/has-usb/usb.json /library/www/html/home/usb.json
+
 systemctl daemon-reload
 systemctl enable --now has-update-api.service has-update-apply.path has-update-check.timer >/dev/null
+systemctl restart has-update-api.service
 
 install -m 644 "$SRC/update-nginx.conf" "$NGINX_CONF"
 if nginx -t 2>/dev/null; then

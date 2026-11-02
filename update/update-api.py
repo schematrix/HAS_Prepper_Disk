@@ -2,11 +2,11 @@
 """HAS_PrepperDisk güncelleme butonu: POST http://box.lan/guncelleme/  {"ids": [...]}
 
 Ana sayfadaki "Güncelle" butonu buraya istek atar. Servis yetkisiz bir kullanıcıyla çalışır ve
-hiçbir şey indirmez: seçimi updates.json'a göre denetleyip istek dosyasına yazar, indirmeyi
+hiçbir şey indirmez: seçimi updates.json ve usb.json'a göre denetleyip istek dosyasına yazar, indirmeyi
 has-update-apply.path (root) başlatır.
 
 The homepage "Güncelle" button posts here. The service runs unprivileged and downloads nothing:
-it checks the selection against updates.json and writes the request file; has-update-apply.path
+it checks the selection against updates.json and usb.json and writes the request file; has-update-apply.path
 (root) starts the download.
 """
 import json
@@ -16,6 +16,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 WEB = os.environ.get("WEB", "/library/www/html")
 UPDATES = os.path.join(WEB, "home", "updates.json")
+USB = os.path.join(WEB, "home", "usb.json")
 STATUS = os.path.join(WEB, "home", "update-status.json")
 REQUEST = os.environ.get("REQUEST", "/run/has-update/request")
 PORT = int(os.environ.get("PORT", "8097"))
@@ -62,7 +63,8 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(400, {"error": "Geçersiz istek / bad request"})
         if running():
             return self._send(409, {"error": "Güncelleme zaten sürüyor / an update is already running"})
-        allowed = {i.get("id") for i in read_json(UPDATES).get("items", []) if i.get("fits")}
+        items = read_json(UPDATES).get("items", []) + read_json(USB).get("items", [])
+        allowed = {i.get("id") for i in items if i.get("fits")}
         if not isinstance(ids, list) or not ids or not all(isinstance(i, str) and i in allowed for i in ids):
             return self._send(400, {"error": "Seçim geçersiz ya da diskte yer yok / invalid selection or no space"})
         tmp = REQUEST + ".tmp"

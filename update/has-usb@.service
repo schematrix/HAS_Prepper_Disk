@@ -1,0 +1,10 @@
+[Unit]
+Description=HAS_PrepperDisk: USB diskindeki içerikleri tara / scan USB drive %I for content
+BindsTo=dev-%i.device
+After=dev-%i.device local-fs.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=@REPO@/scripts/auto-update.sh --usb-add %I
+ExecStop=@REPO@/scripts/auto-update.sh --usb-remove %I

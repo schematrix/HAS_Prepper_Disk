@@ -2,15 +2,18 @@
 # Otomatik güncelleme. Kendiliğinden hiçbir şey indirmez:
 #   --check  internet varsa yeni sürümleri bulur, ana sayfanın okuduğu updates.json'a yazar
 #   --apply  ana sayfada onaylanan içerikleri indirir, ilerlemeyi update-status.json'a yazar
+#   --usb    takılı USB disklerdeki daha yeni ZIM'leri bulur, usb.json'a yazar (internet gerekmez)
 # Automatic updates. Never downloads anything on its own:
 #   --check  if online, finds newer versions and writes them to updates.json (read by the homepage)
 #   --apply  downloads the items approved on the homepage, progress goes to update-status.json
+#   --usb    finds newer ZIMs on plugged-in USB drives and writes them to usb.json (no internet needed)
 # İndirmeyi download-content.sh ve download-map.sh yapar (SHA-256, yer kontrolü, eski sürümü silme).
 # The actual downloads are done by download-content.sh and download-map.sh.
 #
 # Kullanım / usage:
 #   sudo ./scripts/auto-update.sh --check [--force]   --force olmadan 6 saatte birden sık bakmaz / at most every 6 h without --force
 #   sudo ./scripts/auto-update.sh --apply [id ...]    id yoksa ana sayfanın istek dosyasını okur / without ids reads the homepage request
+#   sudo ./scripts/auto-update.sh --usb [--usb-add|--usb-remove sdX1]   has-usb@.service çağırır / called by has-usb@.service
 # Ortam / environment:  WEB=/library/www/html  DEST=/library/zims/content  RESERVE_GB=5  CHECK_HOURS=6
 set -uo pipefail
 
@@ -26,19 +29,24 @@ LOCK="${LOCK:-/run/lock/has-update.lock}"
 UPDATES="$WEB/home/updates.json"
 STATUS="$WEB/home/update-status.json"
 MAP_META="$WEB/harita/data/map.json"
+# usb.json /run altında durur, yeniden başlatınca eski liste kalmaz / lives in /run so a reboot clears a stale list
+USB_DIR="${USB_DIR:-/run/has-usb}"
+USB_JSON="$USB_DIR/usb.json"
+USB_ROOTS="${USB_ROOTS:-$USB_DIR /media}"
 BUILDS_URL=https://build-metadata.protomaps.dev/builds.json
 GB=$((1024 * 1024 * 1024))
 
-mode=""; FORCE=0; ids=()
+mode=""; FORCE=0; ids=(); usbact=""; usbdev=""
 for a in "$@"; do
   case "$a" in
-    --check|--apply) mode=$a;;
+    --check|--apply|--usb) mode=$a;;
+    --usb-add|--usb-remove) mode=--usb; usbact=$a;;
     --force) FORCE=1;;
     -*) echo "bilinmeyen seçenek / unknown option: $a" >&2; exit 2;;
-    *) ids+=("$a");;
+    *) if [ -n "$usbact" ]; then usbdev=$a; else ids+=("$a"); fi;;
   esac
 done
-[ -n "$mode" ] || { echo "kullanım / usage: $0 --check [--force] | --apply [id ...]" >&2; exit 2; }
+[ -n "$mode" ] || { echo "kullanım / usage: $0 --check [--force] | --apply [id ...] | --usb" >&2; exit 2; }
 [ "$EUID" -eq 0 ] || { echo "sudo ile çalıştır / run with sudo" >&2; exit 1; }
 
 # JSON'a yalnızca bu karakterlerden oluşan değerler yazılır, kaçış gerekmez.
@@ -105,6 +113,90 @@ EOF
   echo "OK $(grep -c '"id"' "$UPDATES") yeni sürüm / newer versions -> $UPDATES"
 }
 
+# USB diski salt okunur bağlar. fstab'daki ya da zaten bağlı diskler (ör. USB'li SSD) atlanır.
+# Mounts a USB drive read-only. Drives in fstab or already mounted (e.g. a USB SSD) are skipped.
+usb_add(){
+  local dev="$1" uuid
+  safe "$dev" && [ -b "/dev/$dev" ] || { echo "!! geçersiz aygıt / invalid device: $dev" >&2; return 1; }
+  if findmnt -rn -S "/dev/$dev" >/dev/null; then echo "== /dev/$dev zaten bağlı, atlandı / already mounted, skipped"; return 0; fi
+  uuid=$(blkid -s UUID -o value "/dev/$dev")
+  if [ -n "$uuid" ] && grep -q "UUID=$uuid" /etc/fstab; then echo "== /dev/$dev fstab'da, atlandı / in fstab, skipped"; return 0; fi
+  mkdir -p "$USB_DIR/$dev"
+  mount -o ro,nosuid,nodev,noexec "/dev/$dev" "$USB_DIR/$dev" || { rmdir "$USB_DIR/$dev"; return 1; }
+  echo "OK /dev/$dev -> $USB_DIR/$dev"
+}
+
+usb_remove(){
+  safe "$1" || return 1
+  if mountpoint -q "$USB_DIR/$1"; then umount -l "$USB_DIR/$1"; fi
+  rmdir "$USB_DIR/$1" 2>/dev/null || true
+}
+
+usb_scan(){
+  local avail items="" sep="" seen=" " base prefix current src size fits
+  avail=$(df -B1 --output=avail "$DEST" | tail -1 | tr -dc '0-9')
+  # Ters sıralı: aynı ZIM'in birden çok sürümü varsa en yenisi önce gelir / reverse order: newest version first
+  while read -r base; do
+    [[ "$base" =~ ^([A-Za-z0-9._-]+)_[0-9]{4}-[0-9]{2}[a-z]?\.zim$ ]] || continue
+    prefix=${BASH_REMATCH[1]}
+    case "$seen" in *" $prefix "*) continue;; esac
+    seen+="$prefix "
+    current=$(cd "$DEST" && ls "$prefix"_[0-9][0-9][0-9][0-9]-[0-9][0-9]*.zim 2>/dev/null | tail -1)
+    [ -n "$current" ] && [[ ! "$base" > "$current" ]] && continue
+    src=$(find $USB_ROOTS -maxdepth 5 -type f -name "$base" -print -quit 2>/dev/null)
+    size=$(stat -c %s "$src")
+    fits=true; [ "$avail" -lt $((size + RESERVE_GB * GB)) ] && fits=false
+    items+="$sep"$'\n'"  {\"id\":\"usb.$prefix\",\"kind\":\"usb\",\"file\":\"$base\",\"current\":\"$current\",\"latest\":\"$base\",\"size\":$size,\"fits\":$fits}"
+    sep=","
+  done < <(find $USB_ROOTS -maxdepth 5 -type f -name '*.zim' -printf '%f\n' 2>/dev/null | sort -ru)
+  mkdir -p "$USB_DIR"
+  write_json "$USB_JSON" <<EOF
+{"scanned":"$(date -Is)","free":$avail,"reserve":$((RESERVE_GB * GB)),"items":[$items
+]}
+EOF
+  echo "OK USB: $(grep -c '"id"' "$USB_JSON") içerik / items -> $USB_JSON"
+}
+
+# ZIM dosyasının son 16 baytı, öncesinin MD5 özetidir (openZIM biçimi; yeri başlıkta checksumPos).
+# The last 16 bytes of a ZIM file are the MD5 of everything before them (openZIM format, checksumPos in the header).
+zim_ok(){
+  python3 - "$1" <<'EOF'
+import hashlib, struct, sys
+with open(sys.argv[1], "rb") as f:
+    head = f.read(80)
+    if len(head) < 80 or head[:4] != b"ZIM\x04":
+        sys.exit(1)
+    left = struct.unpack_from("<Q", head, 72)[0]
+    f.seek(0)
+    h = hashlib.md5()
+    while left:
+        b = f.read(min(left, 1 << 20))
+        if not b:
+            sys.exit(1)
+        h.update(b)
+        left -= len(b)
+    sys.exit(0 if f.read(16) == h.digest() else 1)
+EOF
+}
+
+usb_copy(){  # dosya ön-ek / file prefix
+  local file="$1" prefix="$2" src avail old
+  src=$(find $USB_ROOTS -maxdepth 5 -type f -name "$file" -print -quit 2>/dev/null)
+  [ -n "$src" ] || { echo "!! $file USB'de bulunamadı / not found on the USB drive"; return 1; }
+  avail=$(df -B1 --output=avail "$DEST" | tail -1 | tr -dc '0-9')
+  if [ "$avail" -lt $(( $(stat -c %s "$src") + RESERVE_GB * GB )) ]; then
+    echo "!! $file için yer yok / not enough space"; return 1
+  fi
+  cp "$src" "$DEST/$file.part" || { echo "!! kopyalanamadı / copy failed"; rm -f "$DEST/$file.part"; return 1; }
+  echo "   ZIM sağlaması doğrulanıyor / verifying ZIM checksum"
+  zim_ok "$DEST/$file.part" || { echo "!! $file bozuk, silindi / corrupt, deleted"; rm -f "$DEST/$file.part"; return 1; }
+  mv "$DEST/$file.part" "$DEST/$file"
+  for old in "$DEST/$prefix"_[0-9][0-9][0-9][0-9]-[0-9][0-9]*.zim; do
+    [ "$old" != "$DEST/$file" ] && [ -f "$old" ] && { echo "-- eski sürüm siliniyor / removing $old"; rm -f "$old"; }
+  done
+  iiab-make-kiwix-lib
+}
+
 results=""
 status(){  # durum [ek alanlar] / state [extra fields]
   write_json "$STATUS" <<EOF
@@ -117,7 +209,10 @@ EOF
 run_item(){  # id satır kuyruk / id line queue
   local id="$1" line="$2" queue="$3" size part pid got conf=""
   size=$(field size "$line"); [ "$size" = null ] && size=0
-  if [ "$(field kind "$line")" = map ]; then
+  if [ "$(field kind "$line")" = usb ]; then
+    part="$DEST/$(field file "$line").part"
+    usb_copy "$(field file "$line")" "${id#usb.}" &
+  elif [ "$(field kind "$line")" = map ]; then
     local name; name=$(field name "$line")
     part="$WEB/harita/data/$name.pmtiles.part"
     MAP_NAME="$name" WEB="$WEB" \
@@ -146,14 +241,13 @@ apply(){
   if [ ${#ids[@]} -eq 0 ] && [ -f "$REQUEST" ]; then mapfile -t ids < "$REQUEST"; fi
   rm -f "$REQUEST"
   [ ${#ids[@]} -gt 0 ] || { echo "== güncellenecek bir şey seçilmedi / nothing selected"; return 0; }
-  [ -f "$UPDATES" ] || { echo "!! önce / run first: $0 --check" >&2; return 1; }
 
   local i j id line queue failed=0 ok
   for i in "${!ids[@]}"; do
     id=${ids[$i]}
     safe "$id" || { echo "!! geçersiz ad / invalid id: $id" >&2; failed=1; continue; }
     queue=""; for j in "${ids[@]:i+1}"; do safe "$j" && queue+="${queue:+,}\"$j\""; done
-    line=$(grep -F "{\"id\":\"$id\"," "$UPDATES")
+    line=$(grep -shF "{\"id\":\"$id\"," "$UPDATES" "$USB_JSON" | head -1)
     if [ -z "$line" ] || [[ "$line" != *'"fits":true'* ]]; then
       echo "!! $id güncelleme listesinde yok ya da yer yok / not in the update list or no space" >&2; ok=false
     else
@@ -164,13 +258,21 @@ apply(){
     results+="${results:+,}\"$id\":$ok"
   done
   if [ "$failed" = 0 ]; then status "done" "\"finished\":\"$(date -Is)\""; else status error "\"finished\":\"$(date -Is)\""; fi
+  usb_scan
   FORCE=1 check
   return $failed
 }
 
 mkdir -p "$(dirname "$LOCK")"
 exec 9>"$LOCK"
-if [ "$mode" = --check ]; then
+if [ "$mode" = --usb ]; then
+  case "$usbact" in
+    --usb-add) usb_add "$usbdev" || exit 1;;
+    --usb-remove) usb_remove "$usbdev";;
+  esac
+  flock -n 9 || { echo "== güncelleme sürüyor, sonunda taranacak / update running, rescans when done"; exit 0; }
+  usb_scan
+elif [ "$mode" = --check ]; then
   flock -n 9 || { echo "== başka bir güncelleme çalışıyor / another update is running"; exit 0; }
   check
 else

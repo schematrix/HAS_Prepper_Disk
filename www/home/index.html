@@ -282,13 +282,15 @@ function fmtVer(s){
 function itemName(id, items){
   const i = (items || []).find(x => x.id === id) || {};
   if (i.kind === "map") return `Çevrimdışı Harita (${i.name})`;
-  const c = CATS.flatMap(c => c.items).find(x => x.zim && id.startsWith(x.zim));
-  return c ? c.name : id;
+  const usb = id.startsWith("usb."), key = usb ? id.slice(4) : id;
+  const c = CATS.flatMap(c => c.items).find(x => x.zim && key.startsWith(x.zim));
+  return (c ? c.name : key) + (usb ? " (USB'den)" : "");
 }
 
 async function loadUpdates(){
-  const [u, s] = await Promise.all([getJSON("/home/updates.json"), getJSON("/home/update-status.json")]);
-  const box = document.getElementById("upd"), items = (u && u.items) || [];
+  const [u, usb, s] = await Promise.all([getJSON("/home/updates.json"), getJSON("/home/usb.json"), getJSON("/home/update-status.json")]);
+  const box = document.getElementById("upd"), items = [...((usb && usb.items) || []), ...((u && u.items) || [])];
+  const disk = usb || u;
   let html = "";
   if (s && s.state === "running" && Date.now() - new Date(s.updated) < 120000) {
     const c = s.current || {}, pct = c.size ? Math.min(100, Math.floor(c.done * 100 / c.size)) : null;
@@ -310,7 +312,7 @@ async function loadUpdates(){
   if (items.length) {
     html = `<tr><th width="30"></th><th>Yeni sürüm var</th><th class="hide-s" width="150">Sürüm</th><th width="80">Boyut</th></tr>` + html;
     // Varsayılan seçim toplamda sığanlarla sınırlı / pre-select only what fits together
-    let room = u.free - (u.reserve || 0);
+    let room = disk.free - (disk.reserve || 0);
     for (const i of items) {
       const pick = i.fits && (i.size || 0) <= room;
       if (pick) room -= i.size || 0;
@@ -321,11 +323,11 @@ async function loadUpdates(){
       <td class="row2 c hide-s">${esc(fmtVer(i.current))} &rarr; ${esc(fmtVer(i.latest))}</td>
       <td class="row2 c">${esc(fmtSize(i.size))}</td></tr>`;
     }
-    box.dataset.room = u.free - (u.reserve || 0);
+    box.dataset.room = disk.free - (disk.reserve || 0);
     html += `<tr><td class="row1" colspan="4">
-      ${u.metered ? `<div class="warn" style="margin-bottom:4px">Pi şu anda kotalı bir bağlantıda (ör. telefondan internet paylaşımı). İndirme mobil veri harcar.</div>` : ""}
+      ${u && u.metered && u.items.length ? `<div class="warn" style="margin-bottom:4px">Pi şu anda kotalı bir bağlantıda (ör. telefondan internet paylaşımı). İndirme mobil veri harcar.</div>` : ""}
       <input type="button" class="btn" id="upd-go" value="Seçilenleri güncelle"> <span id="upd-total"></span>
-      <span class="small"> &middot; Son kontrol: ${esc(fmtDate(u.checked))}</span></td></tr>`;
+      ${u ? `<span class="small"> &middot; Son kontrol: ${esc(fmtDate(u.checked))}</span>` : ""}</td></tr>`;
   } else if (html) {
     html = `<tr><th colspan="4">Güncellemeler</th></tr>` + html;
   }
