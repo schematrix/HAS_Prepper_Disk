@@ -79,12 +79,19 @@ install.sh                 main installer
 scripts/setup-ssd.sh       mounts the SSD at /library
 scripts/download-content.sh  downloads/updates ZIM files from Kiwix
 scripts/install-homepage.sh  installs the custom homepage
+scripts/status.sh          health check: disk, services, hotspot, content, power
 config/iiab-overrides.yml  Internet-in-a-Box settings
 config/content.conf        list of content to download
 www/home/index.html        homepage
 ```
 
 ### Troubleshooting
+
+Start with the health check. It only reads, needs no sudo, and points to the matching fix below:
+```bash
+./scripts/status.sh
+```
+It checks free space on the SD card and SSD, the web, Kiwix, hotspot and DHCP services, the hotspot bridge, which ZIMs from `config/content.conf` are missing or not yet in the Kiwix library, unfinished downloads, CPU temperature and under-voltage. It exits with 1 if it finds a problem, so it can also run from cron.
 
 - **`ssh user@hostname.local` stops working after install.** Internet-in-a-Box renames the Pi to `box`. Use `ssh user@box.local` or the Pi's IP address. To find the IP, run `arp -a` on your computer or check your router's device list.
 - **Chromium says the profile is locked.** This also comes from the hostname change. Click "Unlock Profile", or run `rm -f ~/.config/chromium/Singleton*`.
@@ -193,12 +200,19 @@ install.sh                   ana kurulum betiği
 scripts/setup-ssd.sh         SSD'yi /library klasörüne bağlar
 scripts/download-content.sh  Kiwix'ten ZIM dosyalarını indirir/günceller
 scripts/install-homepage.sh  özel ana sayfayı kurar
+scripts/status.sh            sağlık kontrolü: disk, servisler, hotspot, içerik, güç
 config/iiab-overrides.yml    Internet-in-a-Box ayarları
 config/content.conf          indirilecek içerik listesi
 www/home/index.html          ana sayfa
 ```
 
 ### Sorun giderme
+
+Önce sağlık kontrolünü çalıştır. Sadece okur, sudo gerektirmez ve aşağıdaki ilgili çözüme yönlendirir:
+```bash
+./scripts/status.sh
+```
+SD kart ve SSD'deki boş alanı, web, Kiwix, hotspot ve DHCP servislerini, hotspot köprüsünü, `config/content.conf` içindeki ZIM'lerden eksik olanları ya da Kiwix kütüphanesine henüz eklenmemiş olanları, yarım kalan indirmeleri, işlemci sıcaklığını ve düşük voltajı kontrol eder. Sorun bulursa 1 koduyla çıkar, bu yüzden cron ile de çalıştırılabilir.
 
 - **Kurulumdan sonra `ssh kullanici@hostname.local` çalışmıyor.** Internet-in-a-Box cihazın adını `box` yapar. `ssh kullanici@box.local` ya da Pi'nin IP adresini kullan. IP adresini bulmak için bilgisayarında `arp -a` çalıştır ya da modeminin cihaz listesine bak.
 - **Chromium "profile is locked" hatası veriyor.** Bu da cihaz adının değişmesinden kaynaklanır. "Unlock Profile" butonuna tıkla ya da `rm -f ~/.config/chromium/Singleton*` komutunu çalıştır.
