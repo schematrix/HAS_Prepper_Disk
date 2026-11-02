@@ -72,6 +72,15 @@ The Pi's built-in Wi-Fi is dedicated to the hotspot. If the Pi needs internet te
 
 **Never run `sudo iiab-network` while a USB Wi-Fi adapter is plugged in.** It may move the hotspot onto the adapter. Unplug it first.
 
+### "Güvendeyim" board and announcements
+
+**http://box.lan/home/guvendeyim.html** ("I'm safe"): anyone on the network can leave their name, "safe" or "need help", an optional rough location and a short message, and search for others by name. Search ignores Turkish letters, so `ayse` finds `Ayşe`. Entries stay on this box only and are never sent anywhere. Whoever writes an entry gets a 6-digit code to delete it later.
+
+- The page warns users not to write a full address, phone or ID number: everyone on the network can read the board.
+- Limits against abuse: 10 entries per device per 10 minutes, wrong delete codes are rate limited, at most 20,000 entries.
+- Box owner: `sudo ./scripts/pano.sh temizle` wipes every entry; `sudo ./scripts/pano.sh kapat` turns the board off (`ac` turns it back on).
+- Announcement at the top of the homepage, e.g. where water is handed out: `sudo ./scripts/pano.sh duyuru "Su dağıtımı 14:00'te okul bahçesinde"`; remove it with `sudo ./scripts/pano.sh duyuru-sil`.
+
 ### Repo layout
 
 ```
@@ -82,6 +91,9 @@ scripts/install-homepage.sh  installs the custom homepage
 config/iiab-overrides.yml  Internet-in-a-Box settings
 config/content.conf        list of content to download
 www/home/index.html        homepage
+www/home/guvendeyim.html   "I'm safe" board page
+pano/                      board service and nginx config
+scripts/pano.sh            announcements, wipe or disable the board
 ```
 
 ### Troubleshooting
@@ -186,6 +198,15 @@ Pi'nin dahili Wi-Fi kartı sadece hotspot için kullanılıyor. Pi'nin geçici o
 
 **USB Wi-Fi adaptörü takılıyken asla `sudo iiab-network` çalıştırma.** Hotspot'u adaptöre taşıyabilir. Önce adaptörü çıkar.
 
+### Güvendeyim panosu ve duyurular
+
+**http://box.lan/home/guvendeyim.html**: ağa bağlı herkes adını, "güvendeyim" ya da "yardım lazım" durumunu, isteğe bağlı kaba bir konumu ve kısa bir mesajı bırakabilir, başkalarını isimle arayabilir. Arama Türkçe harflere takılmaz, `ayse` yazınca `Ayşe` de bulunur. Kayıtlar yalnızca bu kutuda durur, hiçbir yere gönderilmez. Kaydı yazan kişi, sonra silebilmesi için 6 haneli bir kod alır.
+
+- Sayfa tam adres, telefon ya da kimlik numarası yazılmamasını söyler; panoyu ağa bağlı herkes okuyabilir.
+- Kötüye kullanıma karşı: aynı cihazdan 10 dakikada en fazla 10 kayıt, yanlış silme kodu denemeleri sınırlı, en fazla 20.000 kayıt.
+- Kutu sahibi: `sudo ./scripts/pano.sh temizle` tüm kayıtları siler; `sudo ./scripts/pano.sh kapat` panoyu kapatır (`ac` yeniden açar).
+- Ana sayfanın en üstünde duyuru, ör. su dağıtımının yeri: `sudo ./scripts/pano.sh duyuru "Su dağıtımı 14:00'te okul bahçesinde"`; kaldırmak için `sudo ./scripts/pano.sh duyuru-sil`.
+
 ### Repo yapısı
 
 ```
@@ -196,6 +217,9 @@ scripts/install-homepage.sh  özel ana sayfayı kurar
 config/iiab-overrides.yml    Internet-in-a-Box ayarları
 config/content.conf          indirilecek içerik listesi
 www/home/index.html          ana sayfa
+www/home/guvendeyim.html     Güvendeyim panosu sayfası
+pano/                        pano servisi ve nginx ayarı
+scripts/pano.sh              duyuru, panoyu temizleme ya da kapatma
 ```
 
 ### Sorun giderme

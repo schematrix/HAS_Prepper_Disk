@@ -1,0 +1,27 @@
+[Unit]
+Description=HAS_PrepperDisk: Güvendeyim panosu / "I'm safe" board
+After=network.target
+
+[Service]
+Type=simple
+DynamicUser=yes
+StateDirectory=has-pano
+StateDirectoryMode=0700
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/usr/bin/python3 /opt/has-pano/pano-api.py
+Restart=always
+RestartSec=5
+
+# Sıkılaştırma / hardening
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+
+[Install]
+WantedBy=multi-user.target

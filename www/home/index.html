@@ -62,6 +62,7 @@
   .legend span{display:flex;align-items:center;gap:6px}
   .legend .fold{margin-top:0;transform:scale(.8)}
 
+  .duyuru{font-size:14px;font-weight:bold;line-height:1.5;white-space:pre-line}
   .copy{text-align:center;font-size:10px;color:#444;margin:12px 0 4px;line-height:1.6}
 
   @media (max-width:640px){ .hide-s{display:none} .logo{font-size:22px} }
@@ -76,7 +77,7 @@
       <div class="slogan">Çevrimdışı bilgi arşivi &mdash; internet olmasa da açık</div>
     </div>
     <div class="navlinks">
-      <a href="/kiwix/">Kütüphane</a><a href="/maps">Haritalar</a><a href="/admin">Yönetim</a>
+      <a href="/home/guvendeyim.html">Güvendeyim</a><a href="/kiwix/">Kütüphane</a><a href="/maps">Haritalar</a><a href="/admin">Yönetim</a>
     </div>
   </div>
 
@@ -90,6 +91,7 @@
   </td></tr></table>
 
   <div class="crumb"><a href="/home">HAS_PrepperDisk Ana Sayfa</a></div>
+  <table class="forumline" id="duyuru" hidden><tr><th>Duyuru</th></tr><tr><td class="row1 duyuru"></td></tr></table>
   <div class="small" style="margin:0 2px 6px" id="now"></div>
 
   <div class="scroll">
@@ -250,6 +252,13 @@ document.getElementById("search").addEventListener("submit", e => {
     ? `/kiwix/search?books.name=${encodeURIComponent(book)}&pattern=${encodeURIComponent(q)}`
     : `/kiwix/search?pattern=${encodeURIComponent(q)}`;
 });
+
+fetch("/home/duyuru.json", {cache:"no-store"}).then(r => r.ok ? r.json() : null).then(d => {
+  if (!d || !d.metin) return;
+  const box = document.getElementById("duyuru");
+  box.querySelector(".duyuru").textContent = `${d.metin}\n(${new Date(d.zaman).toLocaleString("tr-TR", {dateStyle:"short", timeStyle:"short"})})`;
+  box.hidden = false;
+}).catch(() => {});
 
 loadBooks().then(render);
 </script>

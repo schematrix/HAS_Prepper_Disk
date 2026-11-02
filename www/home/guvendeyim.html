@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HAS_PrepperDisk :: Güvendeyim</title>
+<style>
+  body{margin:0;background:#E5E5E5;color:#000;font-family:Verdana,Tahoma,Arial,sans-serif;font-size:15px}
+  a{color:#006699}
+  .wrap{max-width:760px;margin:0 auto;padding:8px}
+  .bodyline{background:#fff;border:1px solid #98AAB1;padding:8px}
+  .logo{font-family:"Trebuchet MS",Verdana,sans-serif;font-size:24px;font-weight:bold;color:#006699;letter-spacing:-1px;padding:4px}
+  .logo span{color:#DD6900}
+  .crumb{font-weight:bold;margin:6px 2px 10px}
+  h2{font-size:16px;margin:0;padding:8px;background:linear-gradient(#3F7FAD,#006699);color:#FFA34F}
+  .box{border:1px solid #006699;margin-bottom:12px}
+  .in{padding:10px;background:#EFEFEF}
+  label{display:block;font-weight:bold;margin:10px 0 4px}
+  input[type=text],textarea{width:100%;box-sizing:border-box;font:inherit;padding:8px;border:1px solid #7F9DB9;background:#fff}
+  textarea{height:70px}
+  .durum label{display:inline-block;font-weight:normal;margin:4px 16px 0 0}
+  .btn{font:inherit;font-weight:bold;background:#FAFAFA;border:1px solid #000;padding:8px 16px;margin-top:12px;cursor:pointer}
+  .note{font-size:13px;color:#444;margin-top:8px}
+  .msg{margin-top:10px;padding:8px;background:#FFF3D6;border:1px solid #DD6900;display:none}
+  .kod{font-size:22px;letter-spacing:3px}
+  .entry{padding:10px;border-top:1px solid #C7D0D7;background:#fff}
+  .entry .ad{font-weight:bold;font-size:16px}
+  .tag{display:inline-block;font-size:12px;font-weight:bold;padding:2px 6px;color:#fff;margin-left:6px;vertical-align:middle}
+  .tag.guvende{background:#2E7D32}
+  .tag.yardim{background:#B00000}
+  .meta{font-size:13px;color:#555;margin-top:3px}
+  .sil{font-size:12px;margin-left:8px}
+  .warn{color:#B00000;font-weight:bold}
+</style>
+</head>
+<body>
+<div class="wrap"><div class="bodyline">
+  <div class="logo">HAS_<span>Prepper</span>Disk</div>
+  <div class="crumb"><a href="/home">Ana Sayfa</a> &raquo; Güvendeyim</div>
+
+  <div class="box">
+    <h2>Haber bırak</h2>
+    <form class="in" id="yaz">
+      <label for="ad">Ad Soyad</label>
+      <input type="text" id="ad" maxlength="60" required autocomplete="name">
+      <div class="durum">
+        <label><input type="radio" name="durum" value="guvende" checked> Güvendeyim</label>
+        <label><input type="radio" name="durum" value="yardim"> Yardım lazım</label>
+      </div>
+      <label for="yer">Nerede? (isteğe bağlı)</label>
+      <input type="text" id="yer" maxlength="80" placeholder="ör. Cumhuriyet Mah. toplanma alanı">
+      <label for="mesaj">Mesaj (isteğe bağlı)</label>
+      <textarea id="mesaj" maxlength="280" placeholder="ör. Annem ve kardeşim de yanımda, iyiyiz."></textarea>
+      <input type="submit" class="btn" value="Kaydet">
+      <div class="note">Yazdıklarını bu ağa bağlanan herkes görebilir. Tam adres, telefon ya da kimlik numarası yazma.</div>
+      <div class="msg" id="sonuc"></div>
+    </form>
+  </div>
+
+  <div class="box">
+    <h2>Birini ara</h2>
+    <form class="in" id="ara">
+      <input type="text" id="q" maxlength="100" placeholder="İsim, mahalle...">
+      <input type="submit" class="btn" value="Ara">
+      <div class="note" id="bilgi"></div>
+    </form>
+    <div id="liste"></div>
+  </div>
+</div></div>
+<script>
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const $ = id => document.getElementById(id);
+const post = (url, body) => fetch(url, {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(body)});
+
+async function liste(){
+  const q = $("q").value.trim();
+  let d;
+  try {
+    const r = await fetch("/pano/kayitlar?q=" + encodeURIComponent(q), {cache:"no-store"});
+    if (!r.ok) throw 0;
+    d = await r.json();
+  } catch(e) {
+    $("bilgi").innerHTML = `<span class="warn">Pano şu anda kapalı ya da çalışmıyor.</span>`;
+    $("liste").innerHTML = "";
+    return;
+  }
+  $("bilgi").textContent = q
+    ? `${d.bulunan} kayıt bulundu.` + (d.bulunan > d.kayitlar.length ? ` İlk ${d.kayitlar.length} tanesi gösteriliyor, aramayı daraltın.` : "")
+    : `Toplam ${d.toplam} kayıt. En yeniler:`;
+  $("liste").innerHTML = d.kayitlar.map(e => `<div class="entry">
+    <span class="ad">${esc(e.ad)}</span>
+    <span class="tag ${e.durum === "yardim" ? "yardim" : "guvende"}">${e.durum === "yardim" ? "Yardım lazım" : "Güvende"}</span>
+    ${e.yer ? `<div>📍 ${esc(e.yer)}</div>` : ""}
+    ${e.mesaj ? `<div>${esc(e.mesaj)}</div>` : ""}
+    <div class="meta">${esc(new Date(e.zaman).toLocaleString("tr-TR", {dateStyle:"short", timeStyle:"short"}))}
+      <a href="#" class="sil" data-id="${esc(e.id)}">sil</a></div></div>`).join("");
+}
+
+$("yaz").addEventListener("submit", async ev => {
+  ev.preventDefault();
+  const body = {ad: $("ad").value, durum: document.querySelector("input[name=durum]:checked").value, yer: $("yer").value, mesaj: $("mesaj").value};
+  const m = $("sonuc");
+  m.style.display = "block";
+  try {
+    const r = await post("/pano/kayitlar", body), d = await r.json();
+    if (!r.ok) { m.innerHTML = `<span class="warn">${esc(d.error || "Kaydedilemedi.")}</span>`; return; }
+    m.innerHTML = `Kaydın eklendi. Silme kodun: <b class="kod">${esc(d.kod)}</b><br>Bu kodu not al; kaydını sonra silmek istersen gerekir.`;
+    $("yaz").reset();
+    $("q").value = "";
+    liste();
+  } catch(e) { m.innerHTML = `<span class="warn">Pano şu anda kapalı ya da çalışmıyor.</span>`; }
+});
+
+$("ara").addEventListener("submit", ev => { ev.preventDefault(); liste(); });
+
+$("liste").addEventListener("click", async ev => {
+  if (!ev.target.classList.contains("sil")) return;
+  ev.preventDefault();
+  const kod = prompt("Bu kaydı silmek için kaydederken aldığın 6 haneli kodu yaz:");
+  if (!kod) return;
+  const r = await post("/pano/sil", {id: ev.target.dataset.id, kod});
+  if (!r.ok) alert((await r.json().catch(() => ({}))).error || "Silinemedi.");
+  liste();
+});
+
+liste();
+</script>
+</body>
+</html>

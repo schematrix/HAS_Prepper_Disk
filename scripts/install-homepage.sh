@@ -12,6 +12,6 @@ DST=/library/www/html/home
 if [ -f "$DST/index.html" ] && [ ! -f "$DST/index.html.iiab-original" ]; then
   cp "$DST/index.html" "$DST/index.html.iiab-original"
 fi
-cp "$SRC/index.html" "$DST/index.html"
+cp "$SRC"/*.html "$DST/"
 echo "Ana sayfa kuruldu / homepage installed: http://box.lan/home"
 echo "Geri almak için / to restore: sudo cp $DST/index.html.iiab-original $DST/index.html"

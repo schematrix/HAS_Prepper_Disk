@@ -2,7 +2,7 @@
 # HAS_PrepperDisk kurulum betiği / installer
 #  1. Internet-in-a-Box ayarlarını hazırlar / prepares Internet-in-a-Box settings
 #  2. Internet-in-a-Box'ı kurar / installs Internet-in-a-Box
-#  3. HAS_PrepperDisk ana sayfasını kurar / installs the HAS_PrepperDisk homepage
+#  3. HAS_PrepperDisk ana sayfasını ve Güvendeyim panosunu kurar / installs the homepage and board
 #
 # Kurulum sırasında Pi yeniden başlarsa bu betiği tekrar çalıştır.
 # If the Pi reboots during install, just run this script again.
@@ -76,8 +76,9 @@ else
 fi
 
 # -------------------------------------------------------------- 3. ana sayfa
-say "3/3 Ana sayfa / homepage"
+say "3/3 Ana sayfa ve Güvendeyim panosu / homepage and board"
 "$REPO/scripts/install-homepage.sh"
+"$REPO/scripts/install-pano.sh"
 
 IP=$(hostname -I | awk '{print $1}')
 say "Bitti / done"
