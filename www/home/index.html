@@ -90,7 +90,7 @@
       <select id="book"></select>
       <input type="submit" class="btn" value="Git">
       <div class="mode">
-        <label><input type="radio" name="mode" value="semantic" checked> Anlamca ara (Cevher Nüve)</label>
+        <label><input type="radio" name="mode" value="semantic" id="mode-semantic"> Anlamca ara (Cevher Nüve)</label>
         <label><input type="radio" name="mode" value="kiwix"> Kelime eşleşmesi (Kiwix)</label>
       </div>
     </form>
@@ -253,7 +253,6 @@ document.getElementById("search").addEventListener("submit", e => {
   const q = document.getElementById("q").value.trim();
   const book = document.getElementById("book").value;
   if (!q) return;
-  // Varsayılan: cümleyi anlamca arar; Kiwix araması seçilirse eski davranış.
   if (document.querySelector('input[name="mode"]:checked').value === "semantic") {
     // book: seçili kitabın ZIM kimliği; sonuç sayfası yalnızca bilgi olarak kullanır.
     location.href = `/home/search.html?q=${encodeURIComponent(q)}&book=${encodeURIComponent(book)}`;
@@ -265,6 +264,17 @@ document.getElementById("search").addEventListener("submit", e => {
 });
 
 loadBooks().then(render);
+
+/* Anlamca arama yalnızca servis gerçekten çalışıyorsa seçili gelir; aksi halde
+   her arama bir yönlendirme turu atıp Kiwix'e düşerdi. */
+async function enableSemantic(){
+  const semantic = document.getElementById("mode-semantic");
+  try{
+    const r = await fetch("/search/api/health");
+    if (r.ok && (await r.json()).ok) semantic.checked = true;
+  }catch(e){ /* servis yok: Kiwix varsayılan kalır */ }
+}
+enableSemantic();
 </script>
 </body>
 </html>

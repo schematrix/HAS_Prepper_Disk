@@ -5,11 +5,10 @@ Kiwix'in kelime eşleşmesinin bulamadığı soruları ("suyu nasıl arıtırım
 Cevher Nüve embedding'leriyle yanıtlar. Sonuçlar Kiwix URL'leridir.
 
 Kullanım / usage:
-    python3 -m search.server --index /library/index --model /library/models/cevher-nuve --port 8089
+    python3 -m search.server --index /library/index --model /library/models/cevher-nuve --port 8088
 """
 import argparse
 import json
-import re
 import sys
 import time
 import urllib.parse
@@ -24,8 +23,9 @@ KIWIX_CONTENT = "/kiwix/content"
 
 
 def kiwix_url(zim_name, path):
-    zim = re.sub(r"_\d{4}-\d{2}[a-z]?\.zim$", "", zim_name)
-    return f"{KIWIX_CONTENT}/{zim}/{urllib.parse.quote(path)}"
+    """Tam ZIM adı kullanılır: kiwix-serve hem tarihli hem tarihsiz adı kabul eder,
+    tarihi silmek --nodatealiases verilmiş kurulumlarda linki kırardı."""
+    return f"{KIWIX_CONTENT}/{urllib.parse.quote(zim_name)}/{urllib.parse.quote(path)}"
 
 
 class SearchService:
@@ -67,7 +67,7 @@ def make_handler(service):
             qs = urllib.parse.parse_qs(url.query)
             if url.path == "/health":
                 return self._send({"ok": True, **service.stats()})
-            if url.path == "/search":
+            if url.path in ("/search", "/search/api/search"):
                 query = (qs.get("q") or [""])[0].strip()
                 if not query:
                     return self._send({"error": "q parametresi gerekli"}, 400)
@@ -88,7 +88,7 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--index", default="/library/index")
     ap.add_argument("--model", default=DEFAULT_MODEL)
-    ap.add_argument("--port", type=int, default=8089)
+    ap.add_argument("--port", type=int, default=8088)
     ap.add_argument("--host", default="127.0.0.1")
     args = ap.parse_args()
 
@@ -96,6 +96,8 @@ def main():
         sys.exit(f"İndeks yok / no index: {args.index} — önce ./scripts/build-index.sh çalıştır")
     service = SearchService(args.index, args.model)
     stats = service.stats()
+    if not stats["windows"]:
+        sys.exit(f"İndeks boş / empty index: {args.index} — sudo ./scripts/build-index.sh")
     print(f"İndeks yüklendi: {stats['documents']} makale, {stats['windows']} pencere, {stats['ready_seconds']} sn")
     print(f"Dinleniyor: http://{args.host}:{args.port}/search?q=...")
     ThreadingHTTPServer((args.host, args.port), make_handler(service)).serve_forever()

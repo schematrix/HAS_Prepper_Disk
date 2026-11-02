@@ -15,12 +15,28 @@ CONF="${1:-$ROOT/config/content.conf}"
 ZIM_DIR=/library/zims/content
 INDEX_DIR="${INDEX_DIR:-/library/index}"
 MODEL_DIR=/library/models/cevher-nuve
+# Sunucu ve indeks aynı bağımlılıkları kullanır / service and index share one environment
+VENV=/library/.venv
 
 [ -f "$MODEL_DIR/onnx/model.onnx" ] || "$ROOT/scripts/download-model.sh"
-python3 -c "import numpy, onnxruntime, transformers" 2>/dev/null || {
-  echo "!! numpy, onnxruntime ve transformers gerekli / required: sudo apt install -y python3-numpy && pip3 install onnxruntime transformers" >&2
+python3 -c "import libzim" 2>/dev/null || {
+  echo "!! libzim gerekli / required: sudo apt install -y python3-libzim" >&2
   exit 1
 }
+# Raspberry Pi OS Bookworm sistem Python'una pip yazmayı engeller (PEP 668);
+# bağımlılıklar depo dışı olduğu için venv içine kurulur.
+if [ ! -x "$VENV/bin/python" ]; then
+  echo ">> venv oluşturuluyor / creating venv: $VENV"
+  python3 -m venv "$VENV"
+  "$VENV/bin/pip" install --quiet --upgrade pip
+fi
+if ! "$VENV/bin/python" -c "import numpy, onnxruntime, transformers" 2>/dev/null; then
+  echo ">> bağımlılıklar kuruluyor / installing dependencies"
+  "$VENV/bin/pip" install --quiet numpy onnxruntime transformers || {
+    echo "!! kurulamadı / install failed: $VENV/bin/pip install numpy onnxruntime transformers" >&2
+    exit 1
+  }
+fi
 
 zims=()
 while read -r folder prefix rest; do
@@ -35,4 +51,4 @@ done < "$CONF"
 
 echo ">> ${#zims[@]} ZIM indeksleniyor / indexing"
 cd "$ROOT"
-exec python3 -m search.cli --index "$INDEX_DIR" build ${WORKERS:+--workers "$WORKERS"} "${zims[@]}"
+exec "$VENV/bin/python" -m search.cli --index "$INDEX_DIR" build ${WORKERS:+--workers "$WORKERS"} "${zims[@]}"

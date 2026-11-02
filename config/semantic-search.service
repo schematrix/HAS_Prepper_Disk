@@ -5,8 +5,12 @@ Description=HAS_PrepperDisk semantic search (Cevher Nüve)
 After=network.target
 
 [Service]
-WorkingDirectory=/library
-ExecStart=/usr/bin/python3 -m search.server
+WorkingDirectory=/library/search
+# Root gerekmez: servis yalnızca /library/index ve modeli okur. install-homepage.sh
+# bu kullanıcıyı oluşturup dosyaların okunabilir olduğundan emin olur.
+User=semantic-search
+Group=semantic-search
+ExecStart=/library/.venv/bin/python -m search.server --port 8088
 Restart=on-failure
 # Pi'de model + indeks tek çekirdekte çalışır; 2 GB sınırı düşük RAM'li Pi'leri korur.
 MemoryMax=2G

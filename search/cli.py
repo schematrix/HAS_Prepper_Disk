@@ -16,12 +16,18 @@ INDEX_DIR = "/library/index"
 
 def cmd_build(args):
     embedder = ParallelEmbedder(args.model, workers=args.workers)
+    # Mevcut indeks bir kez okunur: her ZIM için diskten yeniden yüklemek büyük
+    # indekslerde kurulumu gereksiz yere uzatıyordu.
+    index = SearchIndex(args.index, load_vectors=False)
     for zim in args.zims:
         if not Path(zim).exists():
             print(f"!! yok / missing: {zim}", file=sys.stderr)
             continue
         t0 = time.time()
-        meta = build(zim, args.index, embedder, progress=_progress(t0))
+        meta = build(zim, args.index, embedder, index=index, progress=_progress(t0))
+        if not meta["windows"]:
+            print(f"!! {Path(zim).name}: makale bulunamadı / no articles, skipped", file=sys.stderr)
+            continue
         print(
             f"OK {Path(zim).name}: {meta['docs']} makale, {meta['windows']} pencere, "
             f"{meta['seconds']}s ({meta['windows_per_s']} pencere/s)"

@@ -39,13 +39,20 @@ def connect(index_dir):
     return con
 
 
-def build(zim_path, index_dir, embedder, progress=None):
-    """Bir ZIM dosyasını indeksler. Aynı ZIM'in eski kayıtlarını değiştirir."""
+def build(zim_path, index_dir, embedder, index, progress=None):
+    """Bir ZIM dosyasını indeksler. Aynı ZIM'in eski kayıtlarını değiştirir.
+
+    `index`, aralıkları ve sıradaki kimliği tutan SearchIndex'tir (vektörsüz);
+    kurulum böylece mevcut indeksi her ZIM için yeniden okumaz.
+    """
     from .zimtext import iter_articles
 
     zim = Path(zim_path)
     out = Path(index_dir)
-    con = connect(out)
+    # Tüm ZIM'lerin vektörleri aramada tek dizide birleştiği için pencere numaraları
+    # diğer ZIM'lerin ardından devam eder; 0'dan başlarsa sonraki ZIM'ler kayar.
+    index.drop_zim(zim.name)
+    con = connect(out)  # şemayı oluşturur / creates the schema
     con.execute("DELETE FROM docs WHERE zim = ?", (zim.name,))
 
     # Aynı ZIM yeniden indekslenirken yarım kalan .npy yeni veriye eklenmesin.
@@ -53,14 +60,15 @@ def build(zim_path, index_dir, embedder, progress=None):
     vecs_path.unlink(missing_ok=True)
     (out / f"{zim.name}.meta.json").unlink(missing_ok=True)
     started = time.time()
-    doc_id = con.execute("SELECT COALESCE(MAX(id), 0) + 1 FROM docs").fetchone()[0]
+    offset = index.windows
+    doc_id = index.next_doc_id
 
     rows, pending, window, docs = [], [], 0, 0
     with open(vecs_path, "wb") as fh:
         _write_header(fh, embedder.dim, 0)
         for path, text in iter_articles(zim):
             pieces = chunk_words(text)
-            rows.append((doc_id, zim.name, path, len(pieces), window + len(pending)))
+            rows.append((doc_id, zim.name, path, len(pieces), offset + window + len(pending)))
             pending.extend(pieces)
             doc_id += 1
             docs += 1
@@ -82,6 +90,12 @@ def build(zim_path, index_dir, embedder, progress=None):
     con.executemany("INSERT INTO docs (id, zim, path, n_win, first) VALUES (?, ?, ?, ?, ?)", rows)
     con.commit()
     con.close()
+    index.add(zim.name, rows)
+
+    if not window:
+        # Makalesi olmayan ZIM: meta dosyası yazılmaz, arama onu atlar.
+        vecs_path.unlink(missing_ok=True)
+        return {"zim": zim.name, "docs": 0, "windows": 0}
 
     meta = {
         "zim": zim.name,
@@ -117,6 +131,8 @@ def _write_shape(fh, rows):
 
 def _normalize(vecs):
     """int8 yuvarlaması vektör boyunu ±%0,5 değiştirir; kosinüs için yeniden ölçeklenir."""
+    if vecs is None:
+        return None
     return vecs / np.clip(np.linalg.norm(vecs, axis=1, keepdims=True), 1e-12, None)
 
 
@@ -146,36 +162,70 @@ def is_indexed(zim_path, index_dir):
 
 
 class SearchIndex:
-    """Bellekte tutulan, tüm ZIM'leri birleştiren arama indeksi."""
+    """Tüm ZIM'leri tek vektör dizisinde birleştiren arama indeksi."""
 
-    def __init__(self, index_dir):
+    def __init__(self, index_dir, load_vectors=True):
+        # İndeks kurarken (load_vectors=False) vektörler RAM'e alınmaz: kurulum
+        # dakikalarca sürer ve Pi'de boşuna yüzlerce MB tutmaya gerek yok.
         self.dir = Path(index_dir)
         self.vecs = None
         self.docs = []
         self.zims = []
-        self._load()
+        self._load() if load_vectors else self._load_docs()
 
     def _load(self):
+        self._load_docs()
+        # Vektör dosyaları docs'taki ofset sırasıyla birleşmeli; her ZIM'in first değeri
+        # kendi ZIM'inde değil, tüm indekste geçerli tek bir kaydırmadır.
+        present = {d[1] for d in self.docs}
         parts = []
         for meta_path in sorted(self.dir.glob("*.meta.json")):
             meta = json.loads(meta_path.read_text())
-            if not meta["windows"]:
+            if not meta["windows"] or meta["zim"] not in present:
                 continue
             parts.append(_load_vecs(self.dir / f"{meta['zim']}.vecs.npy"))
             self.zims.append(meta["zim"])
-        # int8 kopyalar 127 ile ölçeklenmiş; arama için float32'ye çevrilir. Pi'nin RAM'inde
-        # 1 milyon pencere ~1 GB eder, o yüzden int8 diskte kalır, RAM'de yalnızca arama için durur.
-        self.vecs = np.concatenate(parts).astype(np.float32) / 127 if parts else None
-        self.vecs = _normalize(self.vecs)
-        con = sqlite3.connect(self.dir / "index.db")  # arama salt okunur / read-only during search
+        # int8 diskte kalır, RAM'de yalnızca arama kopyası durur. float16 pencere başına
+        # 2 bayt: float32'nin yarısı, int8'in iki katı. 1 milyon pencere 512 MB yerine 1 GB
+        # eder; Pi 5'te sorun değil, 2 GB'lık Pi'lerde hangi ZIM'lerin indekslendiği önemli.
+        self.vecs = _normalize(np.concatenate(parts).astype(np.float16) / 127) if parts else None
+
+    def _load_docs(self):
+        con = connect(self.dir)  # arama salt okunur; ilk kurulumda şemayı da oluşturur
         self.docs = con.execute("SELECT id, zim, path, n_win, first FROM docs ORDER BY first").fetchall()
         con.close()
+
+    @property
+    def windows(self):
+        return sum(d[3] for d in self.docs)
+
+    @property
+    def next_doc_id(self):
+        return max((d[0] for d in self.docs), default=0) + 1
+
+    def drop_zim(self, zim_name):
+        """Yeniden indekslenecek ZIM'in aralıklarını bırakır.
+
+        Kalan aralıklar 0'dan yeniden numaralanır: ZIM tek başına indekslenebilsin
+        diye sıra korunur, boşluk kalmaz ve sıradaki ZIM aralığı bitişik başlar.
+        """
+        kept, first = [], 0
+        for doc_id, zim, path, n_win, _ in self.docs:
+            if zim == zim_name:
+                continue
+            kept.append((doc_id, zim, path, n_win, first))
+            first += n_win
+        self.docs = kept
+
+    def add(self, zim_name, rows):
+        """İndekslenen ZIM'in satırlarını sıraya ekler (aralık numaraları `build`'den)."""
+        self.docs.extend(rows)
 
     def search(self, query_vec, k=10):
         """Kosinüs skoruyla en iyi k makaleyi döner (makale başına en iyi pencere)."""
         if self.vecs is None or not len(self.vecs):
             return []
-        scores = self.vecs @ query_vec.astype(np.float32)
+        scores = self.vecs.astype(np.float32) @ query_vec.astype(np.float32)
         # İlk aşama tüm pencerelerde tarama; aday sayısı yalnızca k'ye bağlı kalsın diye
         # sabit 512 pencereye bakılır (tam Vikipedi'de de maliyet sabit kalır).
         n = min(512, len(scores))

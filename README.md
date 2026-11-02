@@ -84,11 +84,13 @@ sudo ./scripts/build-index.sh
 sudo ./scripts/install-homepage.sh # search box switches to semantic search
 ```
 
+`build-index.sh` keeps its Python dependencies (`numpy`, `onnxruntime`, `transformers`) in `/library/.venv`, so Raspberry Pi OS Bookworm's PEP 668 protection is left alone. `python3-libzim` comes from apt. The service runs as the unprivileged `semantic-search` user on port 8088, and nginx exposes it at `/search/api/`; the homepage only preselects semantic search when that endpoint answers.
+
 | | |
 |---|---|
-| Index size | 256 bytes per window (int8), ~0.4–0.6 MB per 1,000 articles |
+| Index size | 256 bytes per window on disk (int8), ~0.4–0.6 MB per 1,000 articles |
+| RAM at search time | 512 bytes per window (float16 in RAM) + ~60 MB model — 1M windows ≈ 512 MB |
 | Build speed | ~41–67 windows/s per core (≈ 20–33 articles/s on the test packs); `WORKERS=4` scales nearly linearly |
-| RAM at search time | index size + ~60 MB model |
 | Query time | 2.8 ms on a 24k-window index, 34–38 ms on a 359k-window index (1 core) |
 
 Full Wikipedia takes hours to index; start with the survival and health packs. The index is an optional add-on: Kiwix keeps working as before when no ZIM is marked.
@@ -223,11 +225,15 @@ sudo ./scripts/build-index.sh
 sudo ./scripts/install-homepage.sh # arama kutusu anlamca aramaya geçer
 ```
 
+`build-index.sh` Python bağımlılıklarını (`numpy`, `onnxruntime`, `transformers`) `/library/.venv` içinde tutar; Raspberry Pi OS Bookworm'un PEP 668 korumasına dokunulmaz. `python3-libzim` apt'ten gelir. Servis yetkisiz `semantic-search` kullanıcısı olarak 8088 portunda çalışır, nginx onu `/search/api/` altında yayınlar; ana sayfa anlamca aramayı yalnızca bu adres yanıt verdiğinde seçili getirir.
+
 | | |
 |---|---|
-| İndeks boyutu | pencere başına 256 bayt (int8), 1.000 makale başına ~0,4–0,6 MB |
+| | |
+|---|---|
+| İndeks boyutu | diskte pencere başına 256 bayt (int8), 1.000 makale başına ~0,4–0,6 MB |
+| Arama anında RAM | RAM'de pencere başına 512 bayt (float16) + ~60 MB model — 1 milyon pencere ≈ 512 MB |
 | İndeksleme hızı | çekirdek başına ~41–67 pencere/s (test paketlerinde ≈ 20–33 makale/s); `WORKERS=4` neredeyse doğrusal ölçeklenir |
-| Arama anında RAM | indeks boyutu + ~60 MB model |
 | Sorgu süresi | 24 bin pencerede 2,8 ms, 359 bin pencerede 34–38 ms (tek çekirdek) |
 
 Tam Vikipedi'nin indekslenmesi saatler sürer; hayatta kalma ve sağlık paketleriyle başla. İndeks isteğe bağlıdır: hiçbir ZIM işaretlenmezse Kiwix eskisi gibi çalışır.

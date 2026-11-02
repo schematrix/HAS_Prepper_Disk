@@ -47,7 +47,7 @@ class Embedder:
             mask[i, : len(row)] = 1
         return x, mask
 
-    def encode(self, texts, role="doc", batch_size=64):
+    def encode(self, texts, role="doc", batch_size=8):
         """L2-normalize edilmiş vektörler: float32 [n, dim]."""
         texts = [texts] if isinstance(texts, str) else list(texts)
         out = np.empty((len(texts), self.dim), dtype=np.float32)
@@ -83,7 +83,7 @@ class ParallelEmbedder:
             ctx = mp.get_context("fork")  # yalnızca Linux / Raspberry Pi OS
             self.pool = ctx.Pool(self.workers, initializer=_worker_init, initargs=(model_dir,))
 
-    def encode(self, texts, role="doc", batch_size=64):
+    def encode(self, texts, role="doc", batch_size=8):
         texts = list(texts)
         if not texts:
             return np.zeros((0, self.dim), dtype=np.float32)
@@ -116,5 +116,3 @@ def quantize(vecs):
     return np.round(np.clip(vecs, -1, 1) * 127).astype(np.int8)
 
 
-def dequantize(vecs):
-    return vecs.astype(np.float32) / 127.0
