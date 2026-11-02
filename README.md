@@ -82,6 +82,7 @@ scripts/install-homepage.sh  installs the custom homepage
 config/iiab-overrides.yml  Internet-in-a-Box settings
 config/content.conf        list of content to download
 www/home/index.html        homepage
+www/home/acil.html         emergency page (Turkish, sourced from AFAD and EPA)
 ```
 
 ### Troubleshooting
@@ -196,6 +197,7 @@ scripts/install-homepage.sh  özel ana sayfayı kurar
 config/iiab-overrides.yml    Internet-in-a-Box ayarları
 config/content.conf          indirilecek içerik listesi
 www/home/index.html          ana sayfa
+www/home/acil.html           acil durum sayfası (AFAD ve EPA kaynaklı)
 ```
 
 ### Sorun giderme
