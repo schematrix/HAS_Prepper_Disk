@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
 """HAS_PrepperDisk güncelleme butonu: POST http://box.lan/guncelleme/  {"ids": [...]}
 
-Ana sayfadaki "Güncelle" butonu buraya istek atar; yönetici şifresi gerekir. Servis yetkisiz bir kullanıcıyla çalışır ve
+Ana sayfadaki "Güncelle" butonu buraya istek atar; iiab-admin şifresi gerekir. Servis yetkisiz bir kullanıcıyla çalışır ve
 hiçbir şey indirmez: seçimi updates.json ve usb.json'a göre denetleyip istek dosyasına yazar, indirmeyi
 has-update-apply.path (root) başlatır.
 
-The homepage "Güncelle" button posts here; the admin password is required. The service runs unprivileged and downloads nothing:
+The homepage "Güncelle" button posts here; the iiab-admin password is required. The service runs unprivileged and downloads nothing:
 it checks the selection against updates.json and usb.json and writes the request file; has-update-apply.path
 (root) starts the download.
 """
-import hashlib
+import ctypes
+import ctypes.util
 import hmac
 import json
 import os
@@ -24,13 +25,19 @@ USB = os.path.join(WEB, "home", "usb.json")
 STATUS = os.path.join(WEB, "home", "update-status.json")
 REQUEST = os.environ.get("REQUEST", "/run/has-update/request")
 PORT = int(os.environ.get("PORT", "8097"))
-# Şifrenin tuzlu PBKDF2 özeti; systemd LoadCredential ile gelir. / salted PBKDF2 hash of the password, via LoadCredential.
-ADMIN = os.path.join(os.environ.get("CREDENTIALS_DIRECTORY", "/etc/has-update"), "admin")
+# iiab-admin şifresinin /etc/shadow'daki özeti; admin-hash.sh yazar. / iiab-admin's hash from /etc/shadow, written by admin-hash.sh.
+ADMIN = os.path.join(os.path.dirname(REQUEST), "admin")
 # Aynı cihazdan 10 dakikada en fazla 5 yanlış şifre / at most 5 wrong passwords per device per 10 minutes
 RATE_N, RATE_WINDOW = 5, 600
 
 lock = threading.Lock()
 fails = defaultdict(list)
+
+# Python 3.13'te crypt modülü yok; yescrypt özetini sistemin libcrypt'i doğrular.
+# Python 3.13 has no crypt module; the system libcrypt checks the yescrypt hash.
+libcrypt = ctypes.CDLL(ctypes.util.find_library("crypt"))
+libcrypt.crypt.restype = ctypes.c_char_p
+libcrypt.crypt.argtypes = (ctypes.c_char_p, ctypes.c_char_p)
 
 
 def read_json(path):
@@ -44,10 +51,15 @@ def read_json(path):
 def password_ok(pw):
     try:
         with open(ADMIN, encoding="utf-8") as f:
-            salt, h = f.read().split()
-    except (OSError, ValueError):
+            h = f.read().strip()
+    except OSError:
         return False
-    return hmac.compare_digest(hashlib.pbkdf2_hmac("sha256", pw.encode(), bytes.fromhex(salt), 200000).hex(), h)
+    # Şifresi kilitli ya da boş hesap ("!", "*", "") hiçbir şifreyle açılmaz / locked or empty accounts never match
+    if not h.startswith("$"):
+        return False
+    with lock:
+        r = libcrypt.crypt(pw.encode(), h.encode())
+    return bool(r) and hmac.compare_digest(r.decode(), h)
 
 
 def running():

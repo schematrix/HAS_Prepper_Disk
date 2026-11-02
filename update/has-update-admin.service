@@ -1,0 +1,6 @@
+[Unit]
+Description=HAS_PrepperDisk: iiab-admin şifre özetini yenile / refresh the iiab-admin password hash
+
+[Service]
+Type=oneshot
+ExecStart=/opt/has-update/admin-hash.sh

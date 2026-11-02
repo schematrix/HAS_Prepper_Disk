@@ -7,7 +7,7 @@ RequiresMountsFor=/library
 Type=simple
 DynamicUser=yes
 RuntimeDirectory=has-update
-LoadCredential=admin:/etc/has-update/admin
+ExecStartPre=+/opt/has-update/admin-hash.sh
 Environment=PYTHONUNBUFFERED=1
 ExecStart=/usr/bin/python3 /opt/has-update/update-api.py
 Restart=always

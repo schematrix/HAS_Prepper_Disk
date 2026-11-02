@@ -327,7 +327,7 @@ async function loadUpdates(){
     box.dataset.room = disk.free - (disk.reserve || 0);
     html += `<tr><td class="row1" colspan="4">
       ${u && u.metered && u.items.length ? `<div class="warn" style="margin-bottom:4px">Pi şu anda kotalı bir bağlantıda (ör. telefondan internet paylaşımı). İndirme mobil veri harcar.</div>` : ""}
-      <input type="password" id="upd-pw" placeholder="Yönetici şifresi" autocomplete="current-password">
+      <input type="password" id="upd-pw" placeholder="iiab-admin şifresi" autocomplete="current-password">
       <input type="button" class="btn" id="upd-go" value="Seçilenleri güncelle"> <span id="upd-total"></span>
       ${u ? `<span class="small"> &middot; Son kontrol: ${esc(fmtDate(u.checked))}</span>` : ""}</td></tr>`;
   } else if (html) {
@@ -351,7 +351,7 @@ async function startUpdate(){
   const sel = [...document.querySelectorAll("#upd input:checked")];
   const pw = document.getElementById("upd-pw").value;
   if (!sel.length) return;
-  if (!pw) { alert("Güncellemek için yönetici şifresini girin."); return; }
+  if (!pw) { alert("Güncellemek için iiab-admin şifresini girin (yönetim paneli şifresi)."); return; }
   const total = sel.reduce((t, c) => t + +c.dataset.size, 0);
   if (!confirm(`${sel.length} içerik, toplam ${fmtSize(total)} indirilecek. Başlatılsın mı?`)) return;
   document.getElementById("upd-go").disabled = true;

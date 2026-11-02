@@ -4,18 +4,16 @@
 # Installs automatic updates: a check for newer versions when internet appears, a homepage notice
 # and an update button. Nothing is downloaded without approval. Safe to re-run.
 #
-# Güncelleme butonu yönetici şifresi ister; ilk kurulumda sorulur, --sifre ile değiştirilir.
-# The update button asks for an admin password; set on first install, change it with --sifre.
+# Güncelleme butonu iiab-admin şifresini ister / the update button asks for the iiab-admin password.
 #
-# Kullanım / usage:  sudo ./scripts/install-auto-update.sh [--sifre]
+# Kullanım / usage:  sudo ./scripts/install-auto-update.sh
 set -euo pipefail
 
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
 SRC="$REPO/update"
 APP=/opt/has-update
 NGINX_CONF=/etc/nginx/conf.d/has-update-nginx.conf
-ADMIN=/etc/has-update/admin
-UNITS="has-update-check.service has-update-check.timer has-update-apply.service has-update-apply.path has-update-api.service has-usb@.service"
+UNITS="has-update-check.service has-update-check.timer has-update-apply.service has-update-apply.path has-update-api.service has-update-admin.service has-update-admin.path has-usb@.service"
 
 die(){ echo "HATA / ERROR: $*" >&2; exit 1; }
 [ "$EUID" -eq 0 ] || die "sudo ile çalıştır / run with sudo: sudo ./scripts/install-auto-update.sh"
@@ -23,6 +21,7 @@ die(){ echo "HATA / ERROR: $*" >&2; exit 1; }
 
 install -d -m 755 "$APP"
 install -m 644 "$SRC/update-api.py" "$APP/"
+install -m 755 "$SRC/admin-hash.sh" "$APP/"
 # Servisler betikleri bu repodan çalıştırır, config/content.conf değişiklikleri de böylece geçerli olur.
 # The services run the scripts from this repo, so edits to config/content.conf apply too.
 for u in $UNITS; do
@@ -40,23 +39,8 @@ install -m 644 "$SRC/99-has-usb.rules" /etc/udev/rules.d/99-has-usb.rules
 udevadm control --reload
 ln -sfn /run/has-usb/usb.json /library/www/html/home/usb.json
 
-# Şifrenin kendisi değil, tuzlu özeti saklanır / only a salted hash is stored
-if [ ! -s "$ADMIN" ] || [ "${1:-}" = --sifre ]; then
-  while :; do
-    read -rsp "Güncelleme butonu yönetici şifresi / update button admin password (en az 8 / min 8): " P1; echo
-    read -rsp "Tekrar / again: " P2; echo
-    [ "${#P1}" -ge 8 ] && [ "$P1" = "$P2" ] && break
-    echo "Kısa ya da eşleşmiyor / too short or does not match"
-  done
-  install -d -m 700 /etc/has-update
-  printf %s "$P1" | python3 -c 'import hashlib, os, sys
-salt = os.urandom(16)
-print(salt.hex(), hashlib.pbkdf2_hmac("sha256", sys.stdin.buffer.read(), salt, 200000).hex())' > "$ADMIN.tmp"
-  chmod 600 "$ADMIN.tmp" && mv "$ADMIN.tmp" "$ADMIN"
-fi
-
 systemctl daemon-reload
-systemctl enable --now has-update-api.service has-update-apply.path has-update-check.timer >/dev/null
+systemctl enable --now has-update-api.service has-update-apply.path has-update-admin.path has-update-check.timer >/dev/null
 systemctl restart has-update-api.service
 
 install -m 644 "$SRC/update-nginx.conf" "$NGINX_CONF"
