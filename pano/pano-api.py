@@ -32,7 +32,7 @@ DURUMLAR = ("guvende", "yardim")
 RATE_N, RATE_WINDOW = 10, 600
 
 lock = threading.Lock()
-recent = {}
+added = {}
 fails = {}
 
 
@@ -118,8 +118,9 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(400, {"error": "Ad ve durum gerekli / name and status required"})
         kod = f"{secrets.randbelow(10**6):06d}"
         with lock:
-            if self.limited(recent):
+            if len(self.recent(added)) >= RATE_N:
                 return self._send(429, {"error": "Çok fazla kayıt, biraz bekleyin / too many entries, wait a bit"})
+            added[self.ip()].append(time.time())
             e.update(id=secrets.token_hex(6), durum=data["durum"], zaman=datetime.now().astimezone().isoformat(timespec="seconds"),
                      kod=hashlib.sha256(kod.encode()).hexdigest(), ara=norm(" ".join((e["ad"], e["yer"], e["mesaj"]))))
             entries.append(e)
@@ -134,11 +135,11 @@ class Handler(BaseHTTPRequestHandler):
         h = hashlib.sha256(kod.strip().encode()).hexdigest()
         with lock:
             # Yanlış kod denemeleri sınırlı, 6 haneli kod tek tek denenemez / wrong codes are rate limited
-            if len([t for t in fails.get(self.ip(), []) if time.time() - t < RATE_WINDOW]) >= RATE_N:
+            if len(self.recent(fails)) >= RATE_N:
                 return self._send(429, {"error": "Çok fazla deneme, biraz bekleyin / too many tries, wait a bit"})
             match = [e for e in entries if e["id"] == i and secrets.compare_digest(e["kod"], h)]
             if not match:
-                self.limited(fails)
+                fails[self.ip()].append(time.time())
                 return self._send(403, {"error": "Kod yanlış / wrong code"})
             entries.remove(match[0])
             save(entries)
@@ -147,14 +148,11 @@ class Handler(BaseHTTPRequestHandler):
     def ip(self):
         return self.headers.get("X-Real-IP") or self.client_address[0]
 
-    def limited(self, book):
-        """Bu cihazın son 10 dakikadaki sayısı sınırda mı; değilse bu isteği sayar. / Counts this request unless over the limit."""
+    def recent(self, book):
+        """Bu cihazın son RATE_WINDOW saniyedeki istek zamanları / this device's requests in the window."""
         now = time.time()
-        times = [t for t in book.get(self.ip(), []) if now - t < RATE_WINDOW]
-        if len(times) >= RATE_N:
-            return True
-        book[self.ip()] = times + [now]
-        return False
+        book[self.ip()] = [t for t in book.get(self.ip(), []) if now - t < RATE_WINDOW]
+        return book[self.ip()]
 
     def log_message(self, fmt, *args):
         # Kayıt içerikleri ve IP günlüğe yazılmaz / entries and IPs are not logged
