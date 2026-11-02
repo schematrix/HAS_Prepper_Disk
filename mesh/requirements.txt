@@ -1,1 +1,3 @@
-meshtastic>=2.7,<3
+   # Test edilen sürümler / tested versions (2026-11-01)
+   meshtastic==2.7.11
+   pypubsub==4.0.7
