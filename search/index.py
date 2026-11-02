@@ -34,34 +34,43 @@ def connect(index_dir):
             first  INTEGER NOT NULL
         );
         CREATE INDEX IF NOT EXISTS docs_zim ON docs(zim);
+        CREATE TABLE IF NOT EXISTS zims (
+            zim    TEXT PRIMARY KEY,
+            seq    INTEGER NOT NULL
+        );
         """
     )
     return con
 
 
-def build(zim_path, index_dir, embedder, index, progress=None):
+def build(zim_path, index_dir, embedder, progress=None):
     """Bir ZIM dosyasını indeksler. Aynı ZIM'in eski kayıtlarını değiştirir.
 
-    `index`, aralıkları ve sıradaki kimliği tutan SearchIndex'tir (vektörsüz);
-    kurulum böylece mevcut indeksi her ZIM için yeniden okumaz.
+    Aralıklar ve kimlikler veritabanından okunur, böylece bir çalıştırmada art
+    arda indekslenen ZIM'ler de doğru yere yazılır.
     """
     from .zimtext import iter_articles
 
     zim = Path(zim_path)
     out = Path(index_dir)
-    # Tüm ZIM'lerin vektörleri aramada tek dizide birleştiği için pencere numaraları
-    # diğer ZIM'lerin ardından devam eder; 0'dan başlarsa sonraki ZIM'ler kayar.
-    index.drop_zim(zim.name)
     con = connect(out)  # şemayı oluşturur / creates the schema
+    # Tüm ZIM'lerin vektörleri aramada tek dizide birleştiği için pencere numaraları
+    # sırayla devam eder. Yeniden indekslenen ZIM sıranın sonuna taşınır: eski yerini
+    # boşaltmak kalanları kaydırır ve aralıklar iç içe geçer. Bu yüzden ofset, kalan
+    # ZIM'lerin toplamı; arama da vektörleri `zims` sırasıyla birleştirir.
     con.execute("DELETE FROM docs WHERE zim = ?", (zim.name,))
+    con.execute("DELETE FROM zims WHERE zim = ?", (zim.name,))
+    offset, doc_id, seq = con.execute(
+        "SELECT COALESCE((SELECT SUM(d.n_win) FROM docs d JOIN zims z ON z.zim = d.zim), 0),"
+        " COALESCE((SELECT MAX(id) FROM docs), 0) + 1,"
+        " COALESCE((SELECT MAX(seq) FROM zims), 0) + 1"
+    ).fetchone()
 
     # Aynı ZIM yeniden indekslenirken yarım kalan .npy yeni veriye eklenmesin.
     vecs_path = out / f"{zim.name}.vecs.npy"
     vecs_path.unlink(missing_ok=True)
     (out / f"{zim.name}.meta.json").unlink(missing_ok=True)
     started = time.time()
-    offset = index.windows
-    doc_id = index.next_doc_id
 
     rows, pending, window, docs = [], [], 0, 0
     with open(vecs_path, "wb") as fh:
@@ -88,9 +97,13 @@ def build(zim_path, index_dir, embedder, index, progress=None):
         _write_shape(fh, window)
 
     con.executemany("INSERT INTO docs (id, zim, path, n_win, first) VALUES (?, ?, ?, ?, ?)", rows)
+    if window:
+        # Sıra hiç düşmez: silinen ZIM'in numarası tekrar kullanılsa yeni sıra
+        # kalanların arasına düşer ve vektör dosyaları yanlış sırayla birleşir.
+        con.execute("INSERT INTO zims (zim, seq) VALUES (?, ?)", (zim.name, seq))
+        _renumber(con)
     con.commit()
     con.close()
-    index.add(zim.name, rows)
 
     if not window:
         # Makalesi olmayan ZIM: meta dosyası yazılmaz, arama onu atlar.
@@ -108,6 +121,24 @@ def build(zim_path, index_dir, embedder, index, progress=None):
     }
     (out / f"{zim.name}.meta.json").write_text(json.dumps(meta, indent=2))
     return meta
+
+
+def _renumber(con):
+    """Aralıkları `zims` sırasına göre yeniden numaralar (her ZIM sıfırdan başlar)."""
+    con.execute(
+        """
+        WITH seq AS (
+            SELECT d.id, SUM(d.n_win) OVER (
+                PARTITION BY z.seq ORDER BY d.first, d.id ROWS UNBOUNDED PRECEDING
+            ) - d.n_win + COALESCE((
+                SELECT SUM(d2.n_win) FROM docs d2
+                JOIN zims z2 ON z2.zim = d2.zim WHERE z2.seq < z.seq
+            ), 0) AS first
+            FROM docs d JOIN zims z ON z.zim = d.zim
+        )
+        UPDATE docs SET first = (SELECT first FROM seq WHERE seq.id = docs.id)
+        """
+    )
 
 
 _SHAPE_BYTES = 16  # dosya sonundaki "pencere sayısı" alanı
@@ -175,16 +206,24 @@ class SearchIndex:
 
     def _load(self):
         self._load_docs()
-        # Vektör dosyaları docs'taki ofset sırasıyla birleşmeli; her ZIM'in first değeri
-        # kendi ZIM'inde değil, tüm indekste geçerli tek bir kaydırmadır.
-        present = {d[1] for d in self.docs}
+        # Her ZIM'in first değeri kendi ZIM'inde değil, tüm indekste geçerli tek bir
+        # kaydırmadır; vektör dosyaları da aynı sırayla birleşmeli. Sıra, dosya adı
+        # değil indeksleme sırasıdır: alfabetik sıra yeniden indekslemede kayar.
+        # Toplamlar docs'tan gelir, böylece meta ile vektör dosyası tutmasa bile
+        # pencere numaraları dizinin uzunluğuyla birebir örtüşür.
+        con = connect(self.dir)
+        seqs = dict(con.execute("SELECT zim, seq FROM zims"))
+        counts = dict(con.execute("SELECT zim, SUM(n_win) FROM docs GROUP BY zim"))
+        con.close()
         parts = []
-        for meta_path in sorted(self.dir.glob("*.meta.json")):
-            meta = json.loads(meta_path.read_text())
-            if not meta["windows"] or meta["zim"] not in present:
-                continue
-            parts.append(_load_vecs(self.dir / f"{meta['zim']}.vecs.npy"))
-            self.zims.append(meta["zim"])
+        for name in sorted((z for z in counts if z in seqs), key=seqs.get):
+            vecs = _load_vecs(self.dir / f"{name}.vecs.npy")
+            # Eksik ya da artık satır kalırsa aralıklar kaymasın: sayı docs'a uydurulur.
+            rows = min(counts[name], len(vecs))
+            if rows < counts[name]:
+                self.docs = [d for d in self.docs if d[1] != name]
+            parts.append(vecs[:rows])
+            self.zims.append(name)
         # int8 diskte kalır, RAM'de yalnızca arama kopyası durur. float16 pencere başına
         # 2 bayt: float32'nin yarısı, int8'in iki katı. 1 milyon pencere 512 MB yerine 1 GB
         # eder; Pi 5'te sorun değil, 2 GB'lık Pi'lerde hangi ZIM'lerin indekslendiği önemli.
@@ -192,34 +231,11 @@ class SearchIndex:
 
     def _load_docs(self):
         con = connect(self.dir)  # arama salt okunur; ilk kurulumda şemayı da oluşturur
-        self.docs = con.execute("SELECT id, zim, path, n_win, first FROM docs ORDER BY first").fetchall()
+        self.docs = con.execute(
+            "SELECT d.id, d.zim, d.path, d.n_win, d.first FROM docs d"
+            " LEFT JOIN zims z ON z.zim = d.zim ORDER BY z.seq, d.first, d.id"
+        ).fetchall()
         con.close()
-
-    @property
-    def windows(self):
-        return sum(d[3] for d in self.docs)
-
-    @property
-    def next_doc_id(self):
-        return max((d[0] for d in self.docs), default=0) + 1
-
-    def drop_zim(self, zim_name):
-        """Yeniden indekslenecek ZIM'in aralıklarını bırakır.
-
-        Kalan aralıklar 0'dan yeniden numaralanır: ZIM tek başına indekslenebilsin
-        diye sıra korunur, boşluk kalmaz ve sıradaki ZIM aralığı bitişik başlar.
-        """
-        kept, first = [], 0
-        for doc_id, zim, path, n_win, _ in self.docs:
-            if zim == zim_name:
-                continue
-            kept.append((doc_id, zim, path, n_win, first))
-            first += n_win
-        self.docs = kept
-
-    def add(self, zim_name, rows):
-        """İndekslenen ZIM'in satırlarını sıraya ekler (aralık numaraları `build`'den)."""
-        self.docs.extend(rows)
 
     def search(self, query_vec, k=10):
         """Kosinüs skoruyla en iyi k makaleyi döner (makale başına en iyi pencere)."""
