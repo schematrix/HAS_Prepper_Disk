@@ -55,6 +55,8 @@ sudo ./scripts/download-content.sh
 
 **6. Maps.** Open `http://<pi-ip>/admin` (user `iiab-admin`), go to the maps section of the **Install Content** menu and choose the regions you want.
 
+**Alternative, or if that download is blocked (e.g. in Turkey):** `sudo ./scripts/download-map.sh` cuts a vector map of Turkey (about 1.7 GB, down to zoom 15) from the [Protomaps](https://protomaps.com) planet build and installs a small map page. It only talks to `build.protomaps.com`, `github.com` and `cdn.jsdelivr.net`, and nginx serves the files as they are, so there is no extra server config. Open **http://box.lan/harita/**. It works next to the IIAB map, it does not replace it. Another region: `sudo MAP_NAME=germany MAP_BBOX=5.8,47.2,15.1,55.1 ./scripts/download-map.sh` (bbox is `west,south,east,north`). `--update` re-cuts the map when a newer planet build exists. Map data © OpenStreetMap contributors (ODbL).
+
 **7. Use it.** Join the Wi-Fi network you created and open **http://box.lan/home**.
 
 ### Optional: internet over a USB Wi-Fi adapter
@@ -77,6 +79,7 @@ The Pi's built-in Wi-Fi is dedicated to the hotspot. If the Pi needs internet te
 ```
 install.sh                 main installer
 scripts/setup-ssd.sh       mounts the SSD at /library
+scripts/download-map.sh    offline vector map (Protomaps) and its page
 scripts/download-content.sh  downloads/updates ZIM files from Kiwix
 scripts/install-homepage.sh  installs the custom homepage
 config/iiab-overrides.yml  Internet-in-a-Box settings
@@ -89,7 +92,7 @@ www/home/index.html        homepage
 - **`ssh user@hostname.local` stops working after install.** Internet-in-a-Box renames the Pi to `box`. Use `ssh user@box.local` or the Pi's IP address. To find the IP, run `arp -a` on your computer or check your router's device list.
 - **Chromium says the profile is locked.** This also comes from the hostname change. Click "Unlock Profile", or run `rm -f ~/.config/chromium/Singleton*`.
 - **The hotspot doesn't appear.** Connect over Ethernet, check `sudo iiab-diagnostics`, and make sure the install finished: `/etc/iiab/install-flags/iiab-complete` must exist.
-- **Map downloads fail with "connection reset by peer".** The map server (`contabostorage.com`) is blocked in some countries, e.g. Turkey. Install Cloudflare WARP on the Pi, connect, retry the download in the admin console, then disconnect:
+- **Map downloads fail with "connection reset by peer".** The map server (`contabostorage.com`) is blocked in some countries, e.g. Turkey. The easy way out is `sudo ./scripts/download-map.sh` (step 6), which does not use that server. Otherwise install Cloudflare WARP on the Pi, connect, retry the download in the admin console, then disconnect:
   ```bash
   curl -fsSL https://pkg.cloudflareclient.com/pubkey.gpg | sudo gpg --yes --dearmor -o /usr/share/keyrings/cloudflare-warp-archive-keyring.gpg
   echo "deb [signed-by=/usr/share/keyrings/cloudflare-warp-archive-keyring.gpg] https://pkg.cloudflareclient.com/ $(. /etc/os-release; echo $VERSION_CODENAME) main" | sudo tee /etc/apt/sources.list.d/cloudflare-client.list
@@ -169,6 +172,8 @@ sudo ./scripts/download-content.sh
 
 **6. Haritalar.** `http://<pi-ip>/admin` adresine gir (kullanıcı adı `iiab-admin`), **Install Content** menüsündeki harita bölümüne git ve istediğin bölgeleri seç.
 
+**Alternatif, ya da o indirme engelliyse (ör. Türkiye'de):** `sudo ./scripts/download-map.sh` [Protomaps](https://protomaps.com) planet build'inden Türkiye'nin vektör haritasını (yaklaşık 1,7 GB, 15. yakınlaştırma düzeyine kadar) keser ve küçük bir harita sayfası kurar. Yalnızca `build.protomaps.com`, `github.com` ve `cdn.jsdelivr.net` adreslerine gider; dosyaları nginx olduğu gibi sunar, ek sunucu ayarı gerekmez. **http://box.lan/harita/** adresini aç. IIAB haritasının yanında çalışır, onun yerine geçmez. Başka bölge: `sudo MAP_NAME=almanya MAP_BBOX=5.8,47.2,15.1,55.1 ./scripts/download-map.sh` (bbox sırası `batı,güney,doğu,kuzey`). `--update` daha yeni bir planet build'i varsa haritayı yeniden keser. Harita verisi © OpenStreetMap katkıcıları (ODbL).
+
 **7. Kullan.** Oluşturduğun Wi-Fi ağına bağlan ve **http://box.lan/home** adresini aç.
 
 ### İsteğe bağlı: USB Wi-Fi adaptörüyle internet
@@ -191,6 +196,7 @@ Pi'nin dahili Wi-Fi kartı sadece hotspot için kullanılıyor. Pi'nin geçici o
 ```
 install.sh                   ana kurulum betiği
 scripts/setup-ssd.sh         SSD'yi /library klasörüne bağlar
+scripts/download-map.sh      çevrimdışı vektör harita (Protomaps) ve sayfası
 scripts/download-content.sh  Kiwix'ten ZIM dosyalarını indirir/günceller
 scripts/install-homepage.sh  özel ana sayfayı kurar
 config/iiab-overrides.yml    Internet-in-a-Box ayarları
@@ -203,7 +209,7 @@ www/home/index.html          ana sayfa
 - **Kurulumdan sonra `ssh kullanici@hostname.local` çalışmıyor.** Internet-in-a-Box cihazın adını `box` yapar. `ssh kullanici@box.local` ya da Pi'nin IP adresini kullan. IP adresini bulmak için bilgisayarında `arp -a` çalıştır ya da modeminin cihaz listesine bak.
 - **Chromium "profile is locked" hatası veriyor.** Bu da cihaz adının değişmesinden kaynaklanır. "Unlock Profile" butonuna tıkla ya da `rm -f ~/.config/chromium/Singleton*` komutunu çalıştır.
 - **Hotspot görünmüyor.** Ethernet ile bağlan, `sudo iiab-diagnostics` komutuyla kontrol et ve kurulumun bittiğinden emin ol: `/etc/iiab/install-flags/iiab-complete` dosyası var olmalı.
-- **Harita indirmesi "connection reset by peer" hatası veriyor.** Harita sunucusu (`contabostorage.com`) Türkiye gibi bazı ülkelerde engelli. Pi'ye Cloudflare WARP kur, bağlan, indirmeyi yönetim panelinden tekrar başlat ve bitince bağlantıyı kapat:
+- **Harita indirmesi "connection reset by peer" hatası veriyor.** Harita sunucusu (`contabostorage.com`) Türkiye gibi bazı ülkelerde engelli. Kolay çıkış yolu `sudo ./scripts/download-map.sh` (adım 6): o sunucuyu kullanmaz. Aksi halde Pi'ye Cloudflare WARP kur, bağlan, indirmeyi yönetim panelinden tekrar başlat ve bitince bağlantıyı kapat:
   ```bash
   curl -fsSL https://pkg.cloudflareclient.com/pubkey.gpg | sudo gpg --yes --dearmor -o /usr/share/keyrings/cloudflare-warp-archive-keyring.gpg
   echo "deb [signed-by=/usr/share/keyrings/cloudflare-warp-archive-keyring.gpg] https://pkg.cloudflareclient.com/ $(. /etc/os-release; echo $VERSION_CODENAME) main" | sudo tee /etc/apt/sources.list.d/cloudflare-client.list
