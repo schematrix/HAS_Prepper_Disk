@@ -21,6 +21,7 @@
   .durum label{display:inline-block;font-weight:normal;margin:4px 16px 0 0}
   .btn{font:inherit;font-weight:bold;background:#FAFAFA;border:1px solid #000;padding:8px 16px;margin-top:12px;cursor:pointer}
   .note{font-size:13px;color:#444;margin-top:8px}
+  #ara .note:first-child{margin:0 0 10px}
   .msg{margin-top:10px;padding:8px;background:#FFF3D6;border:1px solid #DD6900;display:none}
   .kod{font-size:22px;letter-spacing:3px}
   .entry{padding:10px;border-top:1px solid #C7D0D7;background:#fff}
@@ -60,6 +61,7 @@
   <div class="box">
     <h2>Birini ara</h2>
     <form class="in" id="ara">
+      <div class="note"><b>Kayıtlar doğrulanmaz.</b> Herkes başkası adına yazabilir; bir kayıt o kişinin gerçekten güvende olduğunu kanıtlamaz. Mümkünse kişinin kendisine ya da yakınlarına ulaşarak teyit et.</div>
       <input type="text" id="q" maxlength="100" placeholder="İsim, mahalle...">
       <input type="submit" class="btn" value="Ara">
       <div class="note" id="bilgi"></div>

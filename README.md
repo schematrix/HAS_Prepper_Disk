@@ -78,7 +78,7 @@ The Pi's built-in Wi-Fi is dedicated to the hotspot. If the Pi needs internet te
 
 - The page warns users not to write a full address, phone or ID number: everyone on the network can read the board.
 - Limits against abuse: 10 entries per device per 10 minutes, wrong delete codes are rate limited, at most 20,000 entries.
-- Box owner: `sudo ./scripts/pano.sh temizle` wipes every entry; `sudo ./scripts/pano.sh kapat` turns the board off (`ac` turns it back on).
+- Box owner: `sudo ./scripts/pano.sh kayitlar Ayşe` lists matching entries with their ids, `sudo ./scripts/pano.sh sil <id>` deletes one, `temizle` wipes every entry; `sudo ./scripts/pano.sh kapat` turns the board off (`ac` turns it back on).
 - Announcement at the top of the homepage, e.g. where water is handed out: `sudo ./scripts/pano.sh duyuru "Su dağıtımı 14:00'te okul bahçesinde"`; remove it with `sudo ./scripts/pano.sh duyuru-sil`.
 
 ### Repo layout
@@ -93,7 +93,7 @@ config/content.conf        list of content to download
 www/home/index.html        homepage
 www/home/guvendeyim.html   "I'm safe" board page
 pano/                      board service and nginx config
-scripts/pano.sh            announcements, wipe or disable the board
+scripts/pano.sh            announcements, delete entries or disable the board
 ```
 
 ### Troubleshooting
@@ -204,7 +204,7 @@ Pi'nin dahili Wi-Fi kartı sadece hotspot için kullanılıyor. Pi'nin geçici o
 
 - Sayfa tam adres, telefon ya da kimlik numarası yazılmamasını söyler; panoyu ağa bağlı herkes okuyabilir.
 - Kötüye kullanıma karşı: aynı cihazdan 10 dakikada en fazla 10 kayıt, yanlış silme kodu denemeleri sınırlı, en fazla 20.000 kayıt.
-- Kutu sahibi: `sudo ./scripts/pano.sh temizle` tüm kayıtları siler; `sudo ./scripts/pano.sh kapat` panoyu kapatır (`ac` yeniden açar).
+- Kutu sahibi: `sudo ./scripts/pano.sh kayitlar Ayşe` eşleşen kayıtları numarasıyla listeler, `sudo ./scripts/pano.sh sil <numara>` tek kaydı siler, `temizle` tüm kayıtları siler; `sudo ./scripts/pano.sh kapat` panoyu kapatır (`ac` yeniden açar).
 - Ana sayfanın en üstünde duyuru, ör. su dağıtımının yeri: `sudo ./scripts/pano.sh duyuru "Su dağıtımı 14:00'te okul bahçesinde"`; kaldırmak için `sudo ./scripts/pano.sh duyuru-sil`.
 
 ### Repo yapısı
@@ -219,7 +219,7 @@ config/content.conf          indirilecek içerik listesi
 www/home/index.html          ana sayfa
 www/home/guvendeyim.html     Güvendeyim panosu sayfası
 pano/                        pano servisi ve nginx ayarı
-scripts/pano.sh              duyuru, panoyu temizleme ya da kapatma
+scripts/pano.sh              duyuru, kayıt silme, panoyu kapatma
 ```
 
 ### Sorun giderme
