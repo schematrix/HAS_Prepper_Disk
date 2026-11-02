@@ -47,6 +47,7 @@ sudo ./scripts/setup-ssd.sh /dev/nvme0n1
 ```bash
 sudo ./install.sh
 ```
+During the install Internet-in-a-Box asks three things of its own: a new password for the `iiab-admin` user (used for `http://<pi-ip>/admin`, write it down), a key press to confirm you will re-run the command if something goes wrong, and at the end Enter to reboot. After the reboot run `sudo ./install.sh` once more; it skips the finished part and installs the homepage.
 
 **5. Download content.** Edit `config/content.conf` to choose what to download, then run the script below. The defaults need about 150 GB, and downloads can take many hours. If a download is interrupted, re-run the script and it resumes.
 ```bash
@@ -161,6 +162,7 @@ sudo ./scripts/setup-ssd.sh /dev/nvme0n1
 ```bash
 sudo ./install.sh
 ```
+Kurulum sırasında Internet-in-a-Box kendisi üç şey sorar: `iiab-admin` kullanıcısı için yeni bir şifre (`http://<pi-ip>/admin` girişinde kullanılır, bir yere not et), bir sorun olursa komutu tekrar çalıştıracağını onaylaman için bir tuşa basman ve en sonda yeniden başlatmak için Enter. Pi açıldıktan sonra `sudo ./install.sh` komutunu bir kez daha çalıştır; biten kısmı atlar ve ana sayfayı kurar.
 
 **5. İçerikleri indir.** Ne indirileceğini `config/content.conf` dosyasından seç, sonra aşağıdaki betiği çalıştır. Varsayılan liste yaklaşık 150 GB tutar ve indirme saatler sürebilir. İndirme yarıda kalırsa betiği tekrar çalıştırman yeterli, kaldığı yerden devam eder.
 ```bash
