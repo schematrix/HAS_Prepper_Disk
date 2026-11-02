@@ -17,14 +17,16 @@ DEFAULT_MODEL = "/library/models/cevher-nuve"
 class Embedder:
     def __init__(self, model_dir, threads=1):
         import onnxruntime as ort
-        from transformers import PreTrainedTokenizerFast
+        from tokenizers import Tokenizer
 
         self.dir = Path(model_dir)
         self.cfg = json.loads((self.dir / "config.json").read_text())
-        self.tok = PreTrainedTokenizerFast.from_pretrained(str(self.dir))
-        self.role_ids = {r: self.tok.convert_tokens_to_ids(t) for r, t in ROLE_TOKENS.items()}
+        # tokenizers doğrudan kullanılır: transformers Pi'de kurulumu ve import'u
+        # ağırlaştırıyordu, burada yalnızca tokenizer.json okunuyor.
+        self.tok = Tokenizer.from_file(str(self.dir / "tokenizer.json"))
+        self.role_ids = {r: self.tok.token_to_id(t) for r, t in ROLE_TOKENS.items()}
         self.max_length = int(self.cfg.get("max_length", 256))
-        self.pad_id = self.tok.pad_token_id if self.tok.pad_token_id is not None else 0
+        self.pad_id = int(self.cfg.get("pad_id", 0))
         self.dim = int(self.cfg.get("dim", 256))
 
         opts = ort.SessionOptions()
@@ -37,7 +39,11 @@ class Embedder:
 
     def _batch(self, texts, role):
         rid = self.role_ids[role]
-        ids = self.tok(list(texts), add_special_tokens=False, truncation=True, max_length=self.max_length - 1)["input_ids"]
+        encs = self.tok.encode_batch(
+            [t if t and t.strip() else " " for t in texts],
+            add_special_tokens=False,
+        )
+        ids = [e.ids[: self.max_length - 1] for e in encs]
         ids = [[rid] + row for row in ids]
         width = max(len(row) for row in ids)
         x = np.full((len(ids), width), self.pad_id, dtype=np.int64)

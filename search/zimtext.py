@@ -57,7 +57,11 @@ def iter_articles(zim_path, min_chars=300, max_chars=12000):
     from libzim.reader import Archive
 
     archive = Archive(str(zim_path))
-    zimit = b"zimit" in archive.get_metadata("Scraper").lower()
+    # Zimit dışı ZIM'lerde Scraper alanı yoktur / only zimit archives carry it.
+    try:
+        zimit = b"zimit" in archive.get_metadata("Scraper").lower()
+    except RuntimeError:
+        zimit = False
     for i in range(archive.all_entry_count):
         entry = archive.get_entry_by_id(i)
         if entry.is_redirect:

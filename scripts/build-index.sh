@@ -30,10 +30,10 @@ if [ ! -x "$VENV/bin/python" ]; then
   python3 -m venv "$VENV"
   "$VENV/bin/pip" install --quiet --upgrade pip
 fi
-if ! "$VENV/bin/python" -c "import numpy, onnxruntime, transformers" 2>/dev/null; then
+if ! "$VENV/bin/python" -c "import numpy, onnxruntime, tokenizers" 2>/dev/null; then
   echo ">> bağımlılıklar kuruluyor / installing dependencies"
-  "$VENV/bin/pip" install --quiet numpy onnxruntime transformers || {
-    echo "!! kurulamadı / install failed: $VENV/bin/pip install numpy onnxruntime transformers" >&2
+  "$VENV/bin/pip" install --quiet numpy onnxruntime tokenizers || {
+    echo "!! kurulamadı / install failed: $VENV/bin/pip install numpy onnxruntime tokenizers" >&2
     exit 1
   }
 fi
@@ -41,7 +41,9 @@ fi
 zims=()
 while read -r folder prefix rest; do
   case "$folder" in ''|\#*) continue;; esac
-  case " $rest " in *" index "*) ;; *) continue;; esac
+  # Yalnızca yorumdan (#) önceki kısma bakılır; açıklamadaki "index" kelimesi işaret sayılmaz.
+  fields="${rest%%#*}"
+  case " $fields " in *" index "*) ;; *) continue;; esac
   latest=$(ls -1 "$ZIM_DIR/${prefix}"_*.zim 2>/dev/null | sort | tail -1 || true)
   if [ -z "$latest" ]; then echo "!! $prefix yüklü değil, atlandı / not downloaded, skipped"; continue; fi
   zims+=("$latest")
