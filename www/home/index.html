@@ -309,12 +309,19 @@ async function loadUpdates(){
   }
   if (items.length) {
     html = `<tr><th width="30"></th><th>Yeni sürüm var</th><th class="hide-s" width="150">Sürüm</th><th width="80">Boyut</th></tr>` + html;
-    for (const i of items) html += `<tr class="${i.fits ? "" : "off"}">
-      <td class="row1 c"><input type="checkbox" value="${esc(i.id)}" data-size="${i.size || 0}" ${i.fits ? "checked" : "disabled"}></td>
+    // Varsayılan seçim toplamda sığanlarla sınırlı / pre-select only what fits together
+    let room = u.free - (u.reserve || 0);
+    for (const i of items) {
+      const pick = i.fits && (i.size || 0) <= room;
+      if (pick) room -= i.size || 0;
+      html += `<tr class="${i.fits ? "" : "off"}">
+      <td class="row1 c"><input type="checkbox" value="${esc(i.id)}" data-size="${i.size || 0}" ${i.fits ? (pick ? "checked" : "") : "disabled"}></td>
       <td class="row1"><span class="fname">${esc(itemName(i.id, items))}</span>
-        ${i.fits ? "" : `<div class="fdesc warn">Diskte yer yok. Eski sürüm kullanılmaya devam ediyor.</div>`}</td>
+        ${i.fits ? "" : `<div class="fdesc warn">Diskte yer yok.${i.current ? " Eski sürüm kullanılmaya devam ediyor." : ""}</div>`}</td>
       <td class="row2 c hide-s">${esc(fmtVer(i.current))} &rarr; ${esc(fmtVer(i.latest))}</td>
       <td class="row2 c">${esc(fmtSize(i.size))}</td></tr>`;
+    }
+    box.dataset.room = u.free - (u.reserve || 0);
     html += `<tr><td class="row1" colspan="4">
       ${u.metered ? `<div class="warn" style="margin-bottom:4px">Pi şu anda kotalı bir bağlantıda (ör. telefondan internet paylaşımı). İndirme mobil veri harcar.</div>` : ""}
       <input type="button" class="btn" id="upd-go" value="Seçilenleri güncelle"> <span id="upd-total"></span>
@@ -330,7 +337,10 @@ function updTotal(){
   const el = document.getElementById("upd-total");
   if (!el) return;
   const sel = [...document.querySelectorAll("#upd input:checked")];
-  el.textContent = sel.length ? `Toplam ${fmtSize(sel.reduce((t, c) => t + +c.dataset.size, 0))}` : "";
+  const total = sel.reduce((t, c) => t + +c.dataset.size, 0), over = total > +document.getElementById("upd").dataset.room;
+  el.textContent = sel.length ? `Toplam ${fmtSize(total)}` + (over ? " · Seçilenlerin hepsi diske sığmıyor, birkaçını kaldırın." : "") : "";
+  el.className = over ? "warn" : "";
+  document.getElementById("upd-go").disabled = !sel.length || over;
 }
 
 async function startUpdate(){

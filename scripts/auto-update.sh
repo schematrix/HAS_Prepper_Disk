@@ -98,7 +98,7 @@ check(){
   fi
 
   write_json "$UPDATES" <<EOF
-{"checked":"$(date -Is)","metered":$(metered),"free":$avail,"items":[$items
+{"checked":"$(date -Is)","metered":$(metered),"free":$avail,"reserve":$((RESERVE_GB * GB)),"items":[$items
 ]}
 EOF
   mkdir -p "$STATE_DIR"; touch "$STATE_DIR/last-check"
