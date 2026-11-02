@@ -78,6 +78,7 @@ fi
 # -------------------------------------------------------------- 3. ana sayfa
 say "3/3 Ana sayfa / homepage"
 "$REPO/scripts/install-homepage.sh"
+"$REPO/scripts/install-telefon.sh"
 
 IP=$(hostname -I | awk '{print $1}')
 say "Bitti / done"
@@ -85,6 +86,7 @@ cat <<EOF
 Ana sayfa / homepage:     http://$IP/home   (hotspot üzerinden / via hotspot: http://box.lan/home)
 Yönetim / admin console:  http://$IP/admin  (kullanıcı / user: iiab-admin)
 
-Sıradaki adım / next step: içerikleri indir / download content
+Sıradaki adım / next step: içerikleri ve telefon uygulamasını indir / download content and the phone app
   sudo ./scripts/download-content.sh
+  sudo ./scripts/download-app.sh
 EOF

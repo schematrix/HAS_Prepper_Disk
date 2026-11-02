@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HAS_PrepperDisk :: Telefona İndir</title>
+<style>
+  body{margin:0;background:#E5E5E5;color:#000;font-family:Verdana,Tahoma,Arial,sans-serif;font-size:15px}
+  a{color:#006699}
+  .wrap{max-width:760px;margin:0 auto;padding:8px}
+  .bodyline{background:#fff;border:1px solid #98AAB1;padding:8px}
+  .logo{font-family:"Trebuchet MS",Verdana,sans-serif;font-size:24px;font-weight:bold;color:#006699;letter-spacing:-1px;padding:4px}
+  .logo span{color:#DD6900}
+  .crumb{font-weight:bold;margin:6px 2px 10px}
+  h2{font-size:16px;margin:0;padding:8px;background:linear-gradient(#3F7FAD,#006699);color:#FFA34F}
+  .box{border:1px solid #006699;margin-bottom:12px}
+  .in{padding:10px;background:#EFEFEF}
+  .in p{margin:0 0 8px}
+  .in ol{margin:8px 0;padding-left:22px}
+  .in li{margin-bottom:4px}
+  .btn{display:inline-block;font-weight:bold;background:#FAFAFA;border:1px solid #000;padding:8px 16px;color:#000;text-decoration:none}
+  .note{font-size:13px;color:#444;margin-top:8px}
+  .entry{padding:10px;border-top:1px solid #C7D0D7;background:#fff;display:flex;align-items:center;gap:10px}
+  .entry .ad{font-weight:bold;flex:1}
+  .entry .boy{font-size:13px;color:#555;white-space:nowrap}
+  .tag{display:inline-block;font-size:11px;font-weight:bold;padding:1px 5px;color:#fff;background:#006699;margin-left:6px;vertical-align:middle}
+  .tag.tr{background:#B00000}
+  .warn{color:#B00000;font-weight:bold}
+</style>
+</head>
+<body>
+<div class="wrap"><div class="bodyline">
+  <div class="logo">HAS_<span>Prepper</span>Disk</div>
+  <div class="crumb"><a href="/home">Ana Sayfa</a> &raquo; Telefona İndir</div>
+
+  <div class="box">
+    <div class="in">
+      <p>Kutunun Wi-Fi'ı yalnızca birkaç on metre çeker. Uygulamayı ve içerikleri telefonuna indirirsen kutudan uzaklaştığında da internetsiz okuyabilirsin.</p>
+      <p class="note">Wi-Fi'a bağlanınca kendiliğinden açılan pencerede indirme çalışmayabilir. Bu sayfayı Chrome ya da Safari'de aç: <b>http://box.lan/home/telefon.html</b></p>
+    </div>
+  </div>
+
+  <div class="box">
+    <h2>1. Kiwix uygulaması (Android)</h2>
+    <div class="in">
+      <div id="app">Yükleniyor...</div>
+      <ol>
+        <li>İndirme bitince dosyaya dokun.</li>
+        <li>Telefon izin isterse "Bu kaynaktan yüklemeye izin ver"i aç.</li>
+        <li>"Yükle"ye dokun.</li>
+      </ol>
+      <div class="note"><b>iPhone:</b> Uygulama buradan kurulamaz. Kiwix'i daha önce App Store'dan kurduysan aşağıdaki dosyaları indirip Kiwix'te açabilirsin.</div>
+    </div>
+  </div>
+
+  <div class="box">
+    <h2>2. İçerikler</h2>
+    <div class="in">
+      <p>Dosyayı indir, sonra Kiwix'i aç. Dosya kütüphanede görünmezse Kiwix içinden İndirilenler klasöründeki dosyayı aç. Büyük dosyalar için telefonunda yer olduğundan emin ol.</p>
+    </div>
+    <div id="liste"></div>
+  </div>
+
+  <div class="box" id="acil" hidden>
+    <h2>3. Acil durum bilgileri</h2>
+    <div class="in">
+      <p>Acil durum sayfasını telefonuna kaydet; uygulama gerektirmez, tarayıcıda internetsiz açılır.</p>
+      <a class="btn" href="/home/acil.html" download="acil-durum.html">Acil durum sayfasını indir</a>
+    </div>
+  </div>
+</div></div>
+
+<script>
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const $ = id => document.getElementById(id);
+
+const NAMES = {
+  "wikipedia_tr_all_maxi": "Vikipedi (Türkçe)",
+  "wiktionary_tr_all_nopic": "Vikisözlük (Türkçe)",
+  "wikibooks_tr_all_maxi": "Vikikitap (Türkçe)",
+  "wikisource_tr_all_maxi": "Vikikaynak (Türkçe)",
+  "wikiquote_tr_all_maxi": "Vikisöz (Türkçe)",
+  "ifixit_tr_all": "iFixit (Türkçe)",
+  "phet_tr_all": "PhET Simülasyonları (Türkçe)",
+  "wikipedia_en_all_maxi": "Wikipedia (English)",
+  "zimgit-post-disaster_en": "Afet Sonrası Kitaplığı",
+  "zimgit-water_en": "Su Arıtma",
+  "zimgit-food-preparation_en": "Gıda Hazırlama ve Saklama",
+  "zimgit-knots_en": "Düğümler Kitaplığı",
+  "ready.gov_en_all": "Ready.gov",
+  "solar.lowtechmagazine.com_mul_all": "Low-tech Magazine",
+  "appropedia_en_all_maxi": "Appropedia",
+  "wikipedia_en_medicine_maxi": "WikiMed",
+  "mdwiki_en_all_maxi": "MDWiki",
+  "medlineplus.gov_en_all": "MedlinePlus",
+  "zimgit-medicine_en": "Tıp Kitaplığı",
+  "irp.fas.org_en_military-medicine": "Askeri Sahra Tıbbı",
+  "fas-military-medicine_en": "Askeri Sahra Tıbbı",
+  "nhs.uk_en_medicines": "NHS İlaç Rehberi",
+  "ifixit_en_all": "iFixit (English)",
+  "diy.stackexchange.com_en_all": "Ev Tamiri (DIY)",
+  "gardening.stackexchange.com_en_all": "Bahçecilik",
+  "cooking.stackexchange.com_en_all": "Yemek Pişirme",
+  "ham.stackexchange.com_en_all": "Amatör Telsiz",
+  "mechanics.stackexchange.com_en_all": "Araç Bakımı",
+  "outdoors.stackexchange.com_en_all": "Doğa ve Kamp",
+  "sustainability.stackexchange.com_en_all": "Sürdürülebilirlik"
+};
+
+function fmtSize(b){
+  if (b >= 1e9) return (b / 1e9).toFixed(1).replace(".", ",") + " GB";
+  return Math.max(1, Math.round(b / 1e6)) + " MB";
+}
+
+async function getJSON(url){
+  try { const r = await fetch(url, {cache:"no-store"}); return r.ok ? await r.json() : null; }
+  catch(e) { return null; }
+}
+
+async function loadApp(){
+  const apps = await getJSON("/telefon/app.json") || [];
+  const yeni = apps.find(a => a.abi === "arm64-v8a"), eski = apps.find(a => a.abi === "armeabi-v7a");
+  const link = (a, text) => `<a class="btn" href="/telefon/${encodeURIComponent(a.file)}">${text} (${esc(fmtSize(a.size))})</a>`;
+  $("app").innerHTML = !apps.length
+    ? `<span class="warn">Uygulama henüz kutuya yüklenmemiş.</span> <span class="note">Kutu sahibi: sudo ./scripts/download-app.sh</span>`
+    : (yeni ? link(yeni, "Kiwix'i indir") : "")
+      + (eski ? `<div class="note">Telefon "uygulama yüklenmedi" derse eski telefonlar için olanı dene:<br>${link(eski, "Eski telefonlar için")}</div>` : "");
+}
+
+async function loadZims(){
+  const files = await getJSON("/telefon/zim/");
+  if (!files) { $("liste").innerHTML = `<div class="entry"><span class="warn">İçerik listesi okunamadı.</span></div>`; return; }
+  /* Aynı içeriğin yalnızca en yeni sürümü: ad_YYYY-MM.zim */
+  const latest = {};
+  for (const f of files) {
+    if (f.type !== "file" || !f.name.endsWith(".zim")) continue;
+    const m = f.name.match(/^(.+?)_(\d{4}-\d{2}[a-z]?)\.zim$/);
+    const key = m ? m[1] : f.name.slice(0, -4), ver = m ? m[2] : "";
+    if (!latest[key] || latest[key].ver < ver) latest[key] = {key, ver, file: f.name, size: f.size};
+  }
+  const items = Object.values(latest).sort((a, b) =>
+    (b.key.includes("_tr_") - a.key.includes("_tr_")) || a.size - b.size);
+  $("liste").innerHTML = items.length ? items.map(i => {
+    const tr = i.key.includes("_tr_");
+    return `<div class="entry"><span class="ad">${esc(NAMES[i.key] || i.key)}<span class="tag${tr ? " tr" : ""}">${tr ? "TR" : "EN"}</span></span>
+      <span class="boy">${esc(fmtSize(i.size))}</span>
+      <a class="btn" href="/telefon/zim/${encodeURIComponent(i.file)}" download>İndir</a></div>`;
+  }).join("") : `<div class="entry">Kutuda henüz içerik yok.</div>`;
+}
+
+fetch("/home/acil.html", {method:"HEAD"}).then(r => { $("acil").hidden = !r.ok; }).catch(() => {});
+loadApp();
+loadZims();
+</script>
+</body>
+</html>
