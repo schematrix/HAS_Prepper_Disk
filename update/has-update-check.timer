@@ -1,0 +1,14 @@
+# Asıl tetikleyici NetworkManager'dır (internet gelince). Bu zamanlayıcı sürekli bağlı
+# cihazlar içindir: bağlantı hiç kopmazsa yeni bir "internet geldi" olayı da olmaz.
+# NetworkManager is the main trigger (when internet appears). This timer is for always-online
+# boxes: if the connection never drops there is no new "internet appeared" event.
+[Unit]
+Description=HAS_PrepperDisk: günlük güncelleme kontrolü / daily update check
+
+[Timer]
+OnBootSec=15min
+OnUnitActiveSec=1d
+RandomizedDelaySec=1h
+
+[Install]
+WantedBy=timers.target

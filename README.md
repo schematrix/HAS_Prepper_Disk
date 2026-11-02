@@ -74,6 +74,15 @@ The Pi's built-in Wi-Fi is dedicated to the hotspot. If the Pi needs internet te
 
 **Never run `sudo iiab-network` while a USB Wi-Fi adapter is plugged in.** It may move the hotspot onto the adapter. Unplug it first.
 
+### Automatic updates
+
+`install.sh` sets this up (on an existing install: `sudo ./scripts/install-auto-update.sh`). When the Pi gets an internet connection (Ethernet, the USB Wi-Fi adapter above, a phone hotspot), it checks which content and map have a newer version. It **never downloads on its own**: the homepage shows the list with sizes, and anyone on the network can pick items and press **Seçilenleri güncelle**.
+
+- On a phone hotspot or another metered connection the homepage warns that the download uses mobile data.
+- If an item does not fit on the disk it cannot be selected; the old version keeps working.
+- The check runs at most every 6 hours, plus once a day for boxes that stay online.
+- Check now: `sudo ./scripts/auto-update.sh --check --force`. Update from the terminal: `sudo ./scripts/auto-update.sh --apply wikipedia_tr_all_maxi`. Logs: `journalctl -u has-update-check -u has-update-apply`
+
 ### Repo layout
 
 ```
@@ -82,6 +91,9 @@ scripts/setup-ssd.sh       mounts the SSD at /library
 scripts/download-map.sh    offline vector map (Protomaps) and its page
 scripts/download-content.sh  downloads/updates ZIM files from Kiwix
 scripts/install-homepage.sh  installs the custom homepage
+scripts/auto-update.sh       checks for and applies updates
+scripts/install-auto-update.sh  installs the update services
+update/                      update services, NetworkManager hook, nginx config
 config/iiab-overrides.yml  Internet-in-a-Box settings
 config/content.conf        list of content to download
 www/home/index.html        homepage
@@ -191,6 +203,15 @@ Pi'nin dahili Wi-Fi kartı sadece hotspot için kullanılıyor. Pi'nin geçici o
 
 **USB Wi-Fi adaptörü takılıyken asla `sudo iiab-network` çalıştırma.** Hotspot'u adaptöre taşıyabilir. Önce adaptörü çıkar.
 
+### Otomatik güncelleme
+
+`install.sh` bunu kurar (mevcut kurulumda: `sudo ./scripts/install-auto-update.sh`). Pi internete bağlandığında (Ethernet, yukarıdaki USB Wi-Fi adaptörü, telefondan paylaşım) hangi içeriğin ve haritanın yeni sürümü olduğuna bakar. **Kendiliğinden hiçbir şey indirmez:** ana sayfada boyutlarıyla bir liste çıkar, ağa bağlı herkes seçip **Seçilenleri güncelle** butonuna basabilir.
+
+- Telefondan paylaşım gibi kotalı bir bağlantıdaysa ana sayfa indirmenin mobil veri harcayacağını söyler.
+- Diske sığmayan içerik seçilemez; eski sürüm çalışmaya devam eder.
+- Kontrol en fazla 6 saatte bir yapılır, sürekli bağlı cihazlarda ayrıca günde bir.
+- Hemen kontrol: `sudo ./scripts/auto-update.sh --check --force`. Terminalden güncelleme: `sudo ./scripts/auto-update.sh --apply wikipedia_tr_all_maxi`. Kayıtlar: `journalctl -u has-update-check -u has-update-apply`
+
 ### Repo yapısı
 
 ```
@@ -199,6 +220,9 @@ scripts/setup-ssd.sh         SSD'yi /library klasörüne bağlar
 scripts/download-map.sh      çevrimdışı vektör harita (Protomaps) ve sayfası
 scripts/download-content.sh  Kiwix'ten ZIM dosyalarını indirir/günceller
 scripts/install-homepage.sh  özel ana sayfayı kurar
+scripts/auto-update.sh       güncellemeleri kontrol eder ve uygular
+scripts/install-auto-update.sh  güncelleme servislerini kurar
+update/                      güncelleme servisleri, NetworkManager kancası, nginx ayarı
 config/iiab-overrides.yml    Internet-in-a-Box ayarları
 config/content.conf          indirilecek içerik listesi
 www/home/index.html          ana sayfa

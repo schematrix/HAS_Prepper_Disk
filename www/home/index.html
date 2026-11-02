@@ -62,6 +62,11 @@
   .legend span{display:flex;align-items:center;gap:6px}
   .legend .fold{margin-top:0;transform:scale(.8)}
 
+  /* güncellemeler */
+  .warn{color:#B00000;font-weight:bold}
+  .bar{height:8px;background:#fff;border:1px solid #7F9DB9;margin-top:4px;max-width:400px}
+  .bar i{display:block;height:100%;background:linear-gradient(#FFA34F,#DD6900)}
+
   .copy{text-align:center;font-size:10px;color:#444;margin:12px 0 4px;line-height:1.6}
 
   @media (max-width:640px){ .hide-s{display:none} .logo{font-size:22px} }
@@ -91,6 +96,8 @@
 
   <div class="crumb"><a href="/home">HAS_PrepperDisk Ana Sayfa</a></div>
   <div class="small" style="margin:0 2px 6px" id="now"></div>
+
+  <div class="scroll"><table class="forumline" id="upd" hidden></table></div>
 
   <div class="scroll">
   <table class="forumline" id="forums">
@@ -261,7 +268,90 @@ document.getElementById("search").addEventListener("submit", e => {
     : `/kiwix/search?pattern=${encodeURIComponent(q)}`;
 });
 
+/* Güncellemeler. scripts/auto-update.sh --check yeni sürümleri updates.json'a yazar; butona basınca
+   seçilenler /guncelleme/ adresine gider, indirme update-status.json'dan izlenir. */
+const getJSON = u => fetch(u, {cache:"no-store"}).then(r => r.ok ? r.json() : null).catch(() => null);
+const fmtSize = b => b == null ? "?" : b >= 1e9 ? (b / 1e9).toFixed(1).replace(".", ",") + " GB" : Math.max(1, Math.round(b / 1e6)) + " MB";
+const fmtDate = s => new Date(s).toLocaleString("tr-TR", {dateStyle:"short", timeStyle:"short"});
+function fmtVer(s){
+  let m = /_(\d{4})-(\d{2})[a-z]?\.zim$/.exec(s || "");
+  if (m) return `${m[2]}/${m[1]}`;
+  m = /^(\d{4})(\d{2})(\d{2})$/.exec(s || "");
+  return m ? `${m[3]}.${m[2]}.${m[1]}` : "yüklü değil";
+}
+function itemName(id, items){
+  const i = (items || []).find(x => x.id === id) || {};
+  if (i.kind === "map") return `Çevrimdışı Harita (${i.name})`;
+  const c = CATS.flatMap(c => c.items).find(x => x.zim && id.startsWith(x.zim));
+  return c ? c.name : id;
+}
+
+async function loadUpdates(){
+  const [u, s] = await Promise.all([getJSON("/home/updates.json"), getJSON("/home/update-status.json")]);
+  const box = document.getElementById("upd"), items = (u && u.items) || [];
+  let html = "";
+  if (s && s.state === "running" && Date.now() - new Date(s.updated) < 120000) {
+    const c = s.current || {}, pct = c.size ? Math.min(100, Math.floor(c.done * 100 / c.size)) : null;
+    html = `<tr><th>Güncelleme sürüyor</th></tr><tr><td class="row1">
+      <span class="fname">${esc(itemName(c.id || "", items))}</span>
+      <div class="fdesc">${esc(fmtSize(c.done))}${pct === null ? "" : ` / ${esc(fmtSize(c.size))} (%${pct})`}
+        ${s.queue && s.queue.length ? ` &middot; sırada ${s.queue.length} içerik daha` : ""}</div>
+      ${pct === null ? "" : `<div class="bar"><i style="width:${pct}%"></i></div>`}
+      <div class="fmod">Bu sırada kütüphaneyi kullanmaya devam edebilirsiniz.</div></td></tr>`;
+    box.innerHTML = html; box.hidden = false;
+    setTimeout(loadUpdates, 3000);
+    return;
+  }
+  if (s && s.finished && Date.now() - new Date(s.finished) < 864e5) {
+    const r = Object.entries(s.results || {}), bad = r.filter(([, ok]) => !ok).map(([id]) => itemName(id, items));
+    html += `<tr><td class="row3 small" colspan="4">Son güncelleme (${esc(fmtDate(s.finished))}):
+      ${r.length - bad.length} içerik güncellendi${bad.length ? `, <span class="warn">${bad.length} tanesi başarısız: ${esc(bad.join(", "))}</span>` : "."}</td></tr>`;
+  }
+  if (items.length) {
+    html = `<tr><th width="30"></th><th>Yeni sürüm var</th><th class="hide-s" width="150">Sürüm</th><th width="80">Boyut</th></tr>` + html;
+    for (const i of items) html += `<tr class="${i.fits ? "" : "off"}">
+      <td class="row1 c"><input type="checkbox" value="${esc(i.id)}" data-size="${i.size || 0}" ${i.fits ? "checked" : "disabled"}></td>
+      <td class="row1"><span class="fname">${esc(itemName(i.id, items))}</span>
+        ${i.fits ? "" : `<div class="fdesc warn">Diskte yer yok. Eski sürüm kullanılmaya devam ediyor.</div>`}</td>
+      <td class="row2 c hide-s">${esc(fmtVer(i.current))} &rarr; ${esc(fmtVer(i.latest))}</td>
+      <td class="row2 c">${esc(fmtSize(i.size))}</td></tr>`;
+    html += `<tr><td class="row1" colspan="4">
+      ${u.metered ? `<div class="warn" style="margin-bottom:4px">Pi şu anda kotalı bir bağlantıda (ör. telefondan internet paylaşımı). İndirme mobil veri harcar.</div>` : ""}
+      <input type="button" class="btn" id="upd-go" value="Seçilenleri güncelle"> <span id="upd-total"></span>
+      <span class="small"> &middot; Son kontrol: ${esc(fmtDate(u.checked))}</span></td></tr>`;
+  } else if (html) {
+    html = `<tr><th colspan="4">Güncellemeler</th></tr>` + html;
+  }
+  box.innerHTML = html; box.hidden = !html;
+  updTotal();
+}
+
+function updTotal(){
+  const el = document.getElementById("upd-total");
+  if (!el) return;
+  const sel = [...document.querySelectorAll("#upd input:checked")];
+  el.textContent = sel.length ? `Toplam ${fmtSize(sel.reduce((t, c) => t + +c.dataset.size, 0))}` : "";
+}
+
+async function startUpdate(){
+  const sel = [...document.querySelectorAll("#upd input:checked")];
+  if (!sel.length) return;
+  const total = sel.reduce((t, c) => t + +c.dataset.size, 0);
+  if (!confirm(`${sel.length} içerik, toplam ${fmtSize(total)} indirilecek. Başlatılsın mı?`)) return;
+  document.getElementById("upd-go").disabled = true;
+  try {
+    const r = await fetch("/guncelleme/", {method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({ids: sel.map(c => c.value)})});
+    if (!r.ok) alert((await r.json().catch(() => ({}))).error || "Güncelleme başlatılamadı.");
+  } catch(e) { alert("Güncelleme servisine ulaşılamadı."); }
+  setTimeout(loadUpdates, 2000);
+}
+
+document.getElementById("upd").addEventListener("change", updTotal);
+document.getElementById("upd").addEventListener("click", e => { if (e.target.id === "upd-go") startUpdate(); });
+
 loadBooks().then(render);
+loadUpdates();
 </script>
 </body>
 </html>
