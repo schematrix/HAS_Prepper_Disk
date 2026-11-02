@@ -76,7 +76,7 @@ The Pi's built-in Wi-Fi is dedicated to the hotspot. If the Pi needs internet te
 
 ### Automatic updates
 
-`install.sh` sets this up (on an existing install: `sudo ./scripts/install-auto-update.sh`). When the Pi gets an internet connection (Ethernet, the USB Wi-Fi adapter above, a phone hotspot), it checks which content and map have a newer version. It **never downloads on its own**: the homepage shows the list with sizes, and anyone on the network can pick items and press **Seçilenleri güncelle**.
+`install.sh` sets this up (on an existing install: `sudo ./scripts/install-auto-update.sh`). When the Pi gets an internet connection (Ethernet, the USB Wi-Fi adapter above, a phone hotspot), it checks which content and map have a newer version. It **never downloads on its own**: the homepage shows the list with sizes; pick items, enter the admin password and press **Seçilenleri güncelle**. The installer asks for this password once; change it with `sudo ./scripts/install-auto-update.sh --sifre`.
 
 - On a phone hotspot or another metered connection the homepage warns that the download uses mobile data.
 - If an item does not fit on the disk it cannot be selected; the old version keeps working.
@@ -207,7 +207,7 @@ Pi'nin dahili Wi-Fi kartı sadece hotspot için kullanılıyor. Pi'nin geçici o
 
 ### Otomatik güncelleme
 
-`install.sh` bunu kurar (mevcut kurulumda: `sudo ./scripts/install-auto-update.sh`). Pi internete bağlandığında (Ethernet, yukarıdaki USB Wi-Fi adaptörü, telefondan paylaşım) hangi içeriğin ve haritanın yeni sürümü olduğuna bakar. **Kendiliğinden hiçbir şey indirmez:** ana sayfada boyutlarıyla bir liste çıkar, ağa bağlı herkes seçip **Seçilenleri güncelle** butonuna basabilir.
+`install.sh` bunu kurar (mevcut kurulumda: `sudo ./scripts/install-auto-update.sh`). Pi internete bağlandığında (Ethernet, yukarıdaki USB Wi-Fi adaptörü, telefondan paylaşım) hangi içeriğin ve haritanın yeni sürümü olduğuna bakar. **Kendiliğinden hiçbir şey indirmez:** ana sayfada boyutlarıyla bir liste çıkar; içerikleri seçip yönetici şifresini girerek **Seçilenleri güncelle** butonuna basılır. Şifre kurulumda bir kez sorulur; değiştirmek için `sudo ./scripts/install-auto-update.sh --sifre`.
 
 - Telefondan paylaşım gibi kotalı bir bağlantıdaysa ana sayfa indirmenin mobil veri harcayacağını söyler.
 - Diske sığmayan içerik seçilemez; eski sürüm çalışmaya devam eder.

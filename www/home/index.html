@@ -55,6 +55,7 @@
   .search td{background:#EFEFEF}
   .search input[type=text],.search select{font-family:Verdana,sans-serif;font-size:11px;border:1px solid #7F9DB9;padding:2px;background:#fff}
   .search input[type=text]{width:220px;max-width:100%}
+  #upd-pw{font-family:Verdana,sans-serif;font-size:11px;border:1px solid #7F9DB9;padding:2px;width:130px}
   .btn{font-family:Verdana,sans-serif;font-size:11px;font-weight:bold;background:#FAFAFA;border:1px solid #000;padding:1px 6px;cursor:pointer}
   .btn:hover{background:#FFF3D6}
 
@@ -326,6 +327,7 @@ async function loadUpdates(){
     box.dataset.room = disk.free - (disk.reserve || 0);
     html += `<tr><td class="row1" colspan="4">
       ${u && u.metered && u.items.length ? `<div class="warn" style="margin-bottom:4px">Pi şu anda kotalı bir bağlantıda (ör. telefondan internet paylaşımı). İndirme mobil veri harcar.</div>` : ""}
+      <input type="password" id="upd-pw" placeholder="Yönetici şifresi" autocomplete="current-password">
       <input type="button" class="btn" id="upd-go" value="Seçilenleri güncelle"> <span id="upd-total"></span>
       ${u ? `<span class="small"> &middot; Son kontrol: ${esc(fmtDate(u.checked))}</span>` : ""}</td></tr>`;
   } else if (html) {
@@ -347,13 +349,15 @@ function updTotal(){
 
 async function startUpdate(){
   const sel = [...document.querySelectorAll("#upd input:checked")];
+  const pw = document.getElementById("upd-pw").value;
   if (!sel.length) return;
+  if (!pw) { alert("Güncellemek için yönetici şifresini girin."); return; }
   const total = sel.reduce((t, c) => t + +c.dataset.size, 0);
   if (!confirm(`${sel.length} içerik, toplam ${fmtSize(total)} indirilecek. Başlatılsın mı?`)) return;
   document.getElementById("upd-go").disabled = true;
   try {
     const r = await fetch("/guncelleme/", {method:"POST", headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({ids: sel.map(c => c.value)})});
+      body: JSON.stringify({ids: sel.map(c => c.value), sifre: pw})});
     if (!r.ok) alert((await r.json().catch(() => ({}))).error || "Güncelleme başlatılamadı.");
   } catch(e) { alert("Güncelleme servisine ulaşılamadı."); }
   setTimeout(loadUpdates, 2000);

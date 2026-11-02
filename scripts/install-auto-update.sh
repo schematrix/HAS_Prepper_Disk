@@ -4,13 +4,17 @@
 # Installs automatic updates: a check for newer versions when internet appears, a homepage notice
 # and an update button. Nothing is downloaded without approval. Safe to re-run.
 #
-# Kullanım / usage:  sudo ./scripts/install-auto-update.sh
+# Güncelleme butonu yönetici şifresi ister; ilk kurulumda sorulur, --sifre ile değiştirilir.
+# The update button asks for an admin password; set on first install, change it with --sifre.
+#
+# Kullanım / usage:  sudo ./scripts/install-auto-update.sh [--sifre]
 set -euo pipefail
 
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
 SRC="$REPO/update"
 APP=/opt/has-update
 NGINX_CONF=/etc/nginx/conf.d/has-update-nginx.conf
+ADMIN=/etc/has-update/admin
 UNITS="has-update-check.service has-update-check.timer has-update-apply.service has-update-apply.path has-update-api.service has-usb@.service"
 
 die(){ echo "HATA / ERROR: $*" >&2; exit 1; }
@@ -35,6 +39,21 @@ fi
 install -m 644 "$SRC/99-has-usb.rules" /etc/udev/rules.d/99-has-usb.rules
 udevadm control --reload
 ln -sfn /run/has-usb/usb.json /library/www/html/home/usb.json
+
+# Şifrenin kendisi değil, tuzlu özeti saklanır / only a salted hash is stored
+if [ ! -s "$ADMIN" ] || [ "${1:-}" = --sifre ]; then
+  while :; do
+    read -rsp "Güncelleme butonu yönetici şifresi / update button admin password (en az 8 / min 8): " P1; echo
+    read -rsp "Tekrar / again: " P2; echo
+    [ "${#P1}" -ge 8 ] && [ "$P1" = "$P2" ] && break
+    echo "Kısa ya da eşleşmiyor / too short or does not match"
+  done
+  install -d -m 700 /etc/has-update
+  printf %s "$P1" | python3 -c 'import hashlib, os, sys
+salt = os.urandom(16)
+print(salt.hex(), hashlib.pbkdf2_hmac("sha256", sys.stdin.buffer.read(), salt, 200000).hex())' > "$ADMIN.tmp"
+  chmod 600 "$ADMIN.tmp" && mv "$ADMIN.tmp" "$ADMIN"
+fi
 
 systemctl daemon-reload
 systemctl enable --now has-update-api.service has-update-apply.path has-update-check.timer >/dev/null
