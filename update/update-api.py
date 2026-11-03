@@ -27,8 +27,9 @@ REQUEST = os.environ.get("REQUEST", "/run/has-update/request")
 PORT = int(os.environ.get("PORT", "8097"))
 # iiab-admin şifresinin /etc/shadow'daki özeti; admin-hash.sh yazar. / iiab-admin's hash from /etc/shadow, written by admin-hash.sh.
 ADMIN = os.path.join(os.path.dirname(REQUEST), "admin")
-# Aynı cihazdan 10 dakikada en fazla 5 yanlış şifre / at most 5 wrong passwords per device per 10 minutes
-RATE_N, RATE_WINDOW = 5, 600
+# 10 dakikada cihaz başına 5, IP değiştirmeye karşı tüm cihazlar için toplam 20 yanlış şifre.
+# Per 10 minutes: 5 wrong passwords per device, 20 across all devices so changing IP does not help.
+RATE_N, RATE_ALL, RATE_WINDOW = 5, 20, 600
 
 lock = threading.Lock()
 fails = defaultdict(list)
@@ -96,12 +97,14 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(400, {"error": "Geçersiz istek / bad request"})
         ip, now = self.headers.get("X-Real-IP") or self.client_address[0], time.time()
         with lock:
-            fails[ip] = [t for t in fails[ip] if now - t < RATE_WINDOW]
-            if len(fails[ip]) >= RATE_N:
+            for k in (ip, "*"):
+                fails[k] = [t for t in fails[k] if now - t < RATE_WINDOW]
+            if len(fails[ip]) >= RATE_N or len(fails["*"]) >= RATE_ALL:
                 return self._send(429, {"error": "Çok fazla yanlış şifre, biraz bekleyin / too many wrong passwords, wait a bit"})
         if not isinstance(pw, str) or not password_ok(pw):
             with lock:
                 fails[ip].append(now)
+                fails["*"].append(now)
             return self._send(403, {"error": "Şifre yanlış / wrong password"})
         if running():
             return self._send(409, {"error": "Güncelleme zaten sürüyor / an update is already running"})

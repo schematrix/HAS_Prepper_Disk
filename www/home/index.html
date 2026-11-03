@@ -337,6 +337,7 @@ async function loadUpdates(){
     box.dataset.room = disk.free - (disk.reserve || 0);
     html += `<tr><td class="row1" colspan="4">
       ${u && u.metered && u.items.length ? `<div class="warn" style="margin-bottom:4px">Pi şu anda kotalı bir bağlantıda (ör. telefondan internet paylaşımı). İndirme mobil veri harcar.</div>` : ""}
+      ${usb && usb.items.length ? `<div class="warn" style="margin-bottom:4px">USB'den gelen içerikleri yalnızca güvendiğiniz bir kaynaktan geldiyse seçin. Dosyanın bozuk olmadığı doğrulanır, ama kimin hazırladığı doğrulanamaz.</div>` : ""}
       <input type="password" id="upd-pw" placeholder="iiab-admin şifresi" autocomplete="current-password">
       <input type="button" class="btn" id="upd-go" value="Seçilenleri güncelle"> <span id="upd-total"></span>
       ${u ? `<span class="small"> &middot; Son kontrol: ${esc(fmtDate(u.checked))}</span>` : ""}</td></tr>`;

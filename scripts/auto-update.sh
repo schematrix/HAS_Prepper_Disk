@@ -142,12 +142,16 @@ usb_remove(){
 }
 
 usb_scan(){
-  local avail items="" sep="" seen=" " base prefix current src size fits
+  local avail items="" sep="" seen=" " base prefix current src size fits conf
   avail=$(df -B1 --output=avail "$DEST" | tail -1 | tr -dc '0-9')
+  # MD5 bozulmayı yakalar, değiştirilmiş dosyayı yakalamaz; USB'den yalnızca content.conf'taki içerikler alınır.
+  # The MD5 catches damage, not tampering; only content listed in content.conf is taken from a USB drive.
+  conf=" $(awk '$1 !~ /^#/ && NF >= 2 {printf "%s ", $2}' "$CONF")"
   # Ters sıralı: aynı ZIM'in birden çok sürümü varsa en yenisi önce gelir / reverse order: newest version first
   while read -r base; do
     [[ "$base" =~ ^([A-Za-z0-9._-]+)_[0-9]{4}-[0-9]{2}[a-z]?\.zim$ ]] || continue
     prefix=${BASH_REMATCH[1]}
+    case "$conf" in *" $prefix "*) ;; *) continue;; esac
     case "$seen" in *" $prefix "*) continue;; esac
     seen+="$prefix "
     current=$(cd "$DEST" && ls "$prefix"_[0-9][0-9][0-9][0-9]-[0-9][0-9]*.zim 2>/dev/null | tail -1)

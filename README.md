@@ -83,7 +83,7 @@ The Pi's built-in Wi-Fi is dedicated to the hotspot. If the Pi needs internet te
 - The check runs at most every 6 hours, plus once a day for boxes that stay online.
 - Check now: `sudo ./scripts/auto-update.sh --check --force`. Update from the terminal: `sudo ./scripts/auto-update.sh --apply wikipedia_tr_all_maxi`. Logs: `journalctl -u has-update-check -u has-update-apply`
 
-**From a USB drive, without internet.** Copy `.zim` files (with their original names, e.g. `wikipedia_tr_all_maxi_2026-09.zim`) to a USB drive, anywhere up to three folders deep, and plug it into the Pi. The drive is mounted read-only and the files that are missing or newer than what the box has show up in the same list, marked "(USB'den)". Before a copied file is used, the MD5 checksum stored inside every ZIM file is verified, so a damaged copy is never installed. The SSD that holds `/library` is never treated as a content drive, even when it is connected over USB. Use exFAT or NTFS for files over 4 GB.
+**From a USB drive, without internet.** Copy `.zim` files (with their original names, e.g. `wikipedia_tr_all_maxi_2026-09.zim`) to a USB drive, anywhere up to three folders deep, and plug it into the Pi. The drive is mounted read-only and the files listed in `config/content.conf` that are missing or newer than what the box has show up in the same list, marked "(USB'den)". Before a copied file is used, the MD5 checksum stored inside every ZIM file is verified, so a damaged copy is never installed. The checksum does not prove who made the file, so only approve drives from a source you trust. The SSD that holds `/library` is never treated as a content drive, even when it is connected over USB. Use exFAT or NTFS for files over 4 GB.
 
 ### Repo layout
 
@@ -214,7 +214,7 @@ Pi'nin dahili Wi-Fi kartı sadece hotspot için kullanılıyor. Pi'nin geçici o
 - Kontrol en fazla 6 saatte bir yapılır, sürekli bağlı cihazlarda ayrıca günde bir.
 - Hemen kontrol: `sudo ./scripts/auto-update.sh --check --force`. Terminalden güncelleme: `sudo ./scripts/auto-update.sh --apply wikipedia_tr_all_maxi`. Kayıtlar: `journalctl -u has-update-check -u has-update-apply`
 
-**İnternetsiz, USB diskten.** `.zim` dosyalarını orijinal adlarıyla (ör. `wikipedia_tr_all_maxi_2026-09.zim`) bir USB diske, en fazla üç klasör derinliğe kopyala ve Pi'ye tak. Disk salt okunur bağlanır; kutuda olmayan ya da kutudakinden yeni olan dosyalar aynı listede "(USB'den)" etiketiyle çıkar. Kopyalanan dosya kullanılmadan önce her ZIM dosyasının içinde saklanan MD5 özeti doğrulanır, bozuk kopya asla kurulmaz. `/library`'yi tutan SSD, USB ile bağlı olsa bile içerik diski sayılmaz. 4 GB'tan büyük dosyalar için diski exFAT ya da NTFS biçimlendir.
+**İnternetsiz, USB diskten.** `.zim` dosyalarını orijinal adlarıyla (ör. `wikipedia_tr_all_maxi_2026-09.zim`) bir USB diske, en fazla üç klasör derinliğe kopyala ve Pi'ye tak. Disk salt okunur bağlanır; `config/content.conf`'ta olup kutuda olmayan ya da kutudakinden yeni olan dosyalar aynı listede "(USB'den)" etiketiyle çıkar. Kopyalanan dosya kullanılmadan önce her ZIM dosyasının içinde saklanan MD5 özeti doğrulanır, bozuk kopya asla kurulmaz. Bu özet dosyayı kimin hazırladığını kanıtlamaz; yalnızca güvendiğin bir kaynaktan gelen diski onayla. `/library`'yi tutan SSD, USB ile bağlı olsa bile içerik diski sayılmaz. 4 GB'tan büyük dosyalar için diski exFAT ya da NTFS biçimlendir.
 
 ### Repo yapısı
 
