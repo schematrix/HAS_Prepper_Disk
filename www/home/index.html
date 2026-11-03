@@ -311,13 +311,23 @@ async function loadUpdates(){
       ${r.length - bad.length} içerik güncellendi${bad.length ? `, <span class="warn">${bad.length} tanesi başarısız: ${esc(bad.join(", "))}</span>` : "."}</td></tr>`;
   }
   if (items.length) {
-    html = `<tr><th width="30"></th><th>Yeni sürüm var</th><th class="hide-s" width="150">Sürüm</th><th width="80">Boyut</th></tr>` + html;
+    /* Kutuda hiç olmayan içerikler (yeni kurulumda hepsi) listeyi doldurmasın: kapalı durur, seçili gelmez.
+       Content the box never had (all of it on a fresh install) stays folded and unselected. */
+    const eksik = i => i.kind === "zim" && !i.current && !i.id.startsWith("usb.");
+    const yeni = items.filter(i => !eksik(i)), yok = items.filter(eksik);
+    html = `<tr><th width="30"></th><th>${yeni.length ? "Yeni sürüm var" : "Kutuda olmayan içerikler"}</th><th class="hide-s" width="150">Sürüm</th><th width="80">Boyut</th></tr>` + html;
     // Varsayılan seçim toplamda sığanlarla sınırlı / pre-select only what fits together
     let room = disk.free - (disk.reserve || 0);
-    for (const i of items) {
-      const pick = i.fits && (i.size || 0) <= room;
+    if (yok.length) yeni.push({toggle: true});
+    for (const i of [...yeni, ...yok]) {
+      if (i.toggle) {
+        const boyut = fmtSize(yok.reduce((t, x) => t + (x.size || 0), 0));
+        html += `<tr><td class="row3 small" colspan="4"><a href="#" id="upd-more">Kutuda olmayan ${yok.length} içerik (toplam ${esc(boyut)}): göster</a></td></tr>`;
+        continue;
+      }
+      const pick = !eksik(i) && i.fits && (i.size || 0) <= room;
       if (pick) room -= i.size || 0;
-      html += `<tr class="${i.fits ? "" : "off"}">
+      html += `<tr class="${i.fits ? "" : "off"}${eksik(i) ? " eksik" : ""}"${eksik(i) ? " hidden" : ""}>
       <td class="row1 c"><input type="checkbox" value="${esc(i.id)}" data-size="${i.size || 0}" ${i.fits ? (pick ? "checked" : "") : "disabled"}></td>
       <td class="row1"><span class="fname">${esc(itemName(i.id, items))}</span>
         ${i.fits ? "" : `<div class="fdesc warn">Diskte yer yok.${i.current ? " Eski sürüm kullanılmaya devam ediyor." : ""}</div>`}</td>
@@ -364,7 +374,15 @@ async function startUpdate(){
 }
 
 document.getElementById("upd").addEventListener("change", updTotal);
-document.getElementById("upd").addEventListener("click", e => { if (e.target.id === "upd-go") startUpdate(); });
+document.getElementById("upd").addEventListener("click", e => {
+  if (e.target.id === "upd-go") startUpdate();
+  if (e.target.id === "upd-more") {
+    e.preventDefault();
+    const rows = document.querySelectorAll("#upd tr.eksik"), open = rows.length && rows[0].hidden;
+    rows.forEach(r => { r.hidden = !open; });
+    e.target.textContent = e.target.textContent.replace(open ? "göster" : "gizle", open ? "gizle" : "göster");
+  }
+});
 
 loadBooks().then(render);
 loadUpdates();
