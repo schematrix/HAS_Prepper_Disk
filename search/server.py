@@ -23,9 +23,11 @@ KIWIX_CONTENT = "/kiwix/content"
 
 
 def kiwix_url(zim_name, path):
-    """Tam ZIM adı kullanılır: kiwix-serve hem tarihli hem tarihsiz adı kabul eder,
-    tarihi silmek --nodatealiases verilmiş kurulumlarda linki kırardı."""
-    return f"{KIWIX_CONTENT}/{urllib.parse.quote(zim_name)}/{urllib.parse.quote(path)}"
+    """Tam ZIM adı (tarihiyle) kullanılır, yalnızca .zim uzantısı atılır: kiwix-serve
+    kitap adında uzantı taşımaz. Tarihi silmek --nodatealiases verilmiş kurulumlarda
+    linki kırardı."""
+    book = zim_name.removesuffix(".zim")
+    return f"{KIWIX_CONTENT}/{urllib.parse.quote(book)}/{urllib.parse.quote(path)}"
 
 
 class SearchService:

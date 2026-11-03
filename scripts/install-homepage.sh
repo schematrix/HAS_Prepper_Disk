@@ -31,7 +31,14 @@ if [ -d /library/index ] && [ -f /library/models/cevher-nuve/onnx/model.onnx ]; 
   chmod -R o+rX /library/search /library/index /library/models/cevher-nuve
   cp "$ROOT/config/semantic-search.service" /etc/systemd/system/semantic-search.service
   cp "$ROOT/config/semantic-search-nginx.conf" /etc/nginx/conf.d/semantic-search.conf
-  nginx -t && systemctl reload nginx
+  # nginx -t başarısız olursa yapılandırma yerinde kalıp sonraki yeniden başlatmayı
+  # da düşürmesin / a bad conf must not break the next nginx start.
+  if ! nginx -t; then
+    rm -f /etc/nginx/conf.d/semantic-search.conf
+    echo "!! nginx yapılandırması geçersiz, geri alındı / invalid nginx config, removed" >&2
+    exit 1
+  fi
+  systemctl reload nginx
   systemctl daemon-reload
   systemctl enable --now semantic-search
   echo "Anlamca arama servisi kuruldu / semantic search service installed: /search/api/search"

@@ -19,21 +19,18 @@ MODEL_DIR=/library/models/cevher-nuve
 VENV=/library/.venv
 
 [ -f "$MODEL_DIR/onnx/model.onnx" ] || "$ROOT/scripts/download-model.sh"
-python3 -c "import libzim" 2>/dev/null || {
-  echo "!! libzim gerekli / required: sudo apt install -y python3-libzim" >&2
-  exit 1
-}
 # Raspberry Pi OS Bookworm sistem Python'una pip yazmayı engeller (PEP 668);
-# bağımlılıklar depo dışı olduğu için venv içine kurulur.
+# bağımlılıklar depo dışı olduğu için venv içine kurulur. CLI bu venv'de çalıştığı
+# için libzim'in sistem Python'unda değil, venv'de kurulu olması gerekir.
 if [ ! -x "$VENV/bin/python" ]; then
   echo ">> venv oluşturuluyor / creating venv: $VENV"
   python3 -m venv "$VENV"
   "$VENV/bin/pip" install --quiet --upgrade pip
 fi
-if ! "$VENV/bin/python" -c "import numpy, onnxruntime, tokenizers" 2>/dev/null; then
+if ! "$VENV/bin/python" -c "import numpy, onnxruntime, tokenizers, libzim" 2>/dev/null; then
   echo ">> bağımlılıklar kuruluyor / installing dependencies"
-  "$VENV/bin/pip" install --quiet numpy onnxruntime tokenizers || {
-    echo "!! kurulamadı / install failed: $VENV/bin/pip install numpy onnxruntime tokenizers" >&2
+  "$VENV/bin/pip" install --quiet numpy onnxruntime tokenizers libzim || {
+    echo "!! kurulamadı / install failed: $VENV/bin/pip install numpy onnxruntime tokenizers libzim" >&2
     exit 1
   }
 fi

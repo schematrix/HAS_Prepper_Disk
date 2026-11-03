@@ -84,7 +84,7 @@ sudo ./scripts/build-index.sh
 sudo ./scripts/install-homepage.sh # search box switches to semantic search
 ```
 
-`build-index.sh` keeps its Python dependencies (`numpy`, `onnxruntime`, and `tokenizers` for the tokenizer alone, without the heavier `transformers`) in `/library/.venv`, so Raspberry Pi OS Bookworm's PEP 668 protection is left alone. `python3-libzim` comes from apt. The service runs as the unprivileged `semantic-search` user on port 8088, and nginx exposes it at `/search/api/`; the homepage only preselects semantic search when that endpoint answers.
+`build-index.sh` keeps its Python dependencies (`numpy`, `onnxruntime`, and `tokenizers` for the tokenizer alone, without the heavier `transformers`) in `/library/.venv`, so Raspberry Pi OS Bookworm's PEP 668 protection is left alone. `libzim` is installed into that venv too, so the indexer sees it. The service runs as the unprivileged `semantic-search` user on port 8088, and nginx exposes it at `/search/api/`; the homepage only preselects semantic search when that endpoint answers.
 
 | | |
 |---|---|
@@ -225,7 +225,7 @@ sudo ./scripts/build-index.sh
 sudo ./scripts/install-homepage.sh # arama kutusu anlamca aramaya geçer
 ```
 
-`build-index.sh` Python bağımlılıklarını (`numpy`, `onnxruntime`, `tokenizers`) `/library/.venv` içinde tutar; Raspberry Pi OS Bookworm'un PEP 668 korumasına dokunulmaz. `python3-libzim` apt'ten gelir. Servis yetkisiz `semantic-search` kullanıcısı olarak 8088 portunda çalışır, nginx onu `/search/api/` altında yayınlar; ana sayfa anlamca aramayı yalnızca bu adres yanıt verdiğinde seçili getirir.
+`build-index.sh` Python bağımlılıklarını (`numpy`, `onnxruntime`, `tokenizers`) `/library/.venv` içinde tutar; Raspberry Pi OS Bookworm'un PEP 668 korumasına dokunulmaz. `libzim` de aynı venv'e kurulur, böylece indeksleyici onu görür. Servis yetkisiz `semantic-search` kullanıcısı olarak 8088 portunda çalışır, nginx onu `/search/api/` altında yayınlar; ana sayfa anlamca aramayı yalnızca bu adres yanıt verdiğinde seçili getirir.
 
 | | |
 |---|---|
