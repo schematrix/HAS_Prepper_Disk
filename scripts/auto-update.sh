@@ -34,6 +34,7 @@ USB_DIR="${USB_DIR:-/run/has-usb}"
 USB_JSON="$USB_DIR/usb.json"
 USB_ROOTS="${USB_ROOTS:-$USB_DIR /media}"
 BUILDS_URL=https://build-metadata.protomaps.dev/builds.json
+BUILD_BASE=https://build.protomaps.com
 GB=$((1024 * 1024 * 1024))
 
 mode=""; FORCE=0; ids=(); usbact=""; usbdev=""
@@ -92,11 +93,19 @@ check(){
 
   # Harita yalnızca kuruluysa ve daha yeni planet build'i varsa / map only if installed and a newer build exists
   if [ -f "$MAP_META" ]; then
-    local name have build bytes mapavail
+    local name have build bytes mapavail i d
     name=$(sed -nE 's/.*"name": *"([^"]*)".*/\1/p' "$MAP_META")
     have=$(sed -nE 's/.*"build": *"([0-9]{8})".*/\1/p' "$MAP_META")
     bytes=$(sed -nE 's/.*"bytes": *([0-9]+).*/\1/p' "$MAP_META")
     build=$(curl -fsSL -m 60 "$BUILDS_URL" | grep -oE '"key":"[0-9]{8}\.pmtiles"' | grep -oE '[0-9]{8}' | sort | tail -1)
+    # builds.json bazı bağlantılardan açılmıyor; o zaman son günlerin dosyası doğrudan sorulur.
+    # builds.json is unreachable from some connections; then ask for recent daily files directly.
+    if [ -z "$build" ]; then
+      for i in $(seq 0 10); do
+        d=$(date -u -d "-$i day" +%Y%m%d)
+        curl -fsI -m 20 -o /dev/null "$BUILD_BASE/$d.pmtiles" && { build=$d; break; }
+      done
+    fi
     if safe "$name" && [ -n "$have" ] && [ -n "$build" ] && [ "$build" -gt "$have" ]; then
       # download-map.sh ile aynı kural / same rule as download-map.sh: kesit ~3 GB + pay / extract ~3 GB + headroom
       mapavail=$(df -B1 --output=avail "$WEB" | tail -1 | tr -dc '0-9')
