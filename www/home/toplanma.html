@@ -31,10 +31,19 @@
   <div class="crumb"><a href="/home">Ana Sayfa</a> &raquo; Toplanma Alanları</div>
 
   <div class="box">
-    <h2>Afet toplanma alanları</h2>
+    <h2>En yakın toplanma alanları</h2>
+    <div id="yakin"></div>
     <div class="in">
-      <p><b>Bu liste eksik.</b> Veriler OpenStreetMap'ten gelir ve birçok ilde hiç kayıt yoktur. Listede yoksa bulunduğun yerde toplanma alanı yok demek değildir.</p>
-      <p class="note">Resmi toplanma alanını internet varken e-Devlet'te "Afet ve Acil Durum Toplanma Alanı Sorgulama" ile öğren.</p>
+      <p class="note">Başka bir yerdeysen: telefonun harita uygulamasında bulunduğun yere (mavi noktaya) basılı tut, çıkan koordinatı kopyala ve buraya yapıştır. Konumu GPS bulur, internet gerekmez.</p>
+      <input type="text" id="konum" placeholder="ör. 37.5753, 36.9228" autocomplete="off">
+    </div>
+  </div>
+
+  <div class="box">
+    <h2>Mahalle ya da ilçe ile ara</h2>
+    <div class="in">
+      <p>Liste AFAD'ın resmi toplanma alanlarından gelir ve kutuya yazıldığı günün kopyasıdır; o günden sonra değişen alanlar burada görünmez.</p>
+      <p class="note">İnternet varken güncel hâlini e-Devlet'te "Afet ve Acil Durum Toplanma Alanı Sorgulama" ile kontrol et.</p>
       <input type="text" id="q" placeholder="Mahalle, ilçe ya da yer adı..." autocomplete="off">
       <div class="note" id="bilgi"></div>
     </div>
@@ -42,7 +51,7 @@
     <div id="liste"></div>
   </div>
 
-  <div class="note">Veri: © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> katkıcıları, ODbL. "Haritada aç" telefonundaki harita uygulamasını açar; uygulamada çevrimdışı harita iniyse internet gerekmez.</div>
+  <div class="note">Veri: AFAD (Açık Veri); mahalle adları ve ek noktalar © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> katkıcıları, ODbL. "Haritada aç" telefonundaki harita uygulamasını açar; uygulamada çevrimdışı harita iniyse internet gerekmez.</div>
 </div></div>
 
 <script>
@@ -52,40 +61,77 @@ const $ = id => document.getElementById(id);
 const fold = s => s.replace(/İ/g, "i").replace(/I/g, "ı").toLowerCase()
   .replace(/[çğıöşüâîû]/g, c => "cgiosuaiu"["çğıöşüâîû".indexOf(c)]);
 const MAX = 50;
-let osm = [];
+/* iPhone ve Mac tarayıcıları geo: bağlantısını açmıyor; orada Apple Haritalar açılır. */
+const APPLE = /iPhone|iPad|iPod|Macintosh/.test(navigator.userAgent);
+let alanlar = [], yerel = [], kutu = null;
 
 function entry(n, cls){
-  const ad = n.ad || "Toplanma alanı", yer = [n.mahalle, n.yer].filter(Boolean).join(" · ");
+  const ad = n.ad || "Toplanma alanı";
+  const km = n.km !== undefined && `${n.km.toFixed(1).replace(".", ",")} km`;
+  const yer = [...new Set([km, n.mahalle, n.yer, n.il, n.osm && "OpenStreetMap"].filter(Boolean))].join(" · ");
   const ll = `${n.lat}, ${n.lon}`;
+  const url = APPLE ? `https://maps.apple.com/?ll=${n.lat},${n.lon}&q=${encodeURIComponent(ad)}`
+    : `geo:${n.lat},${n.lon}?q=${n.lat},${n.lon}(${encodeURIComponent(ad)})`;
   return `<div class="entry${cls}"><div class="ad">${esc(ad)}</div>
     ${yer ? `<div class="meta">${esc(yer)}</div>` : ""}
-    <div class="meta">${esc(ll)} &middot; <a href="geo:${n.lat},${n.lon}?q=${n.lat},${n.lon}(${encodeURIComponent(ad)})">Haritada aç</a></div></div>`;
+    <div class="meta">${esc(ll)} &middot; <a href="${url}">Haritada aç</a></div></div>`;
+}
+
+function yakin(){
+  const s = $("konum").value;
+  let lat, lon, baslik;
+  if (s.trim()) {
+    /* İlk iki ondalıklı sayı: "37.5753, 36.9228", "37,5753 36,9228" ya da harita bağlantısındaki "@37.5753,36.9228". */
+    [lat, lon] = (s.match(/\d+[.,]\d+/g) || []).map(x => parseFloat(x.replace(",", ".")));
+    if (!(lat >= 34 && lat <= 43 && lon >= 24 && lon <= 46)) {
+      $("yakin").innerHTML = `<div class="entry">Konum anlaşılamadı. Önce enlem, sonra boylam yaz, ör. 37.5753, 36.9228</div>`;
+      return;
+    }
+    /* Doğuda ters yapıştırılan enlem ve boylam da geçerli görünür; nasıl okunduğu yazılır. */
+    baslik = `Enlem ${lat} (kuzey), boylam ${lon} (doğu) için en yakın 10 alan:`;
+  } else if (kutu) {
+    /* Kutunun Wi-Fi'ı birkaç on metre çeker; bağlanan kişi kutunun yanındadır. */
+    ({lat, lon} = kutu);
+    baslik = `<b>Bu kutuya en yakın alanlar.</b> Kutunun Wi-Fi'ına bağlıysan sen de yakınındasın. (Kutunun konumu ${esc(kutu.tarih)} tarihinde kaydedildi; kutu taşındıysa aşağıya kendi konumunu yapıştır.)`;
+  } else {
+    $("yakin").innerHTML = "";
+    return;
+  }
+  /* Birkaç km içinde düz yeryüzü yaklaşımı yeterli. */
+  const uzak = n => Math.hypot((n.lat - lat) * 111.2, (n.lon - lon) * 111.2 * Math.cos(lat * Math.PI / 180));
+  $("yakin").innerHTML = `<div class="entry note">${baslik}</div>`
+    + [...yerel, ...alanlar].map(n => ({...n, km: uzak(n)})).sort((a, b) => a.km - b.km)
+      .slice(0, 10).map(n => entry(n, n.yerel ? " yerel" : "")).join("");
 }
 
 function show(){
   const words = fold($("q").value.trim()).split(/\s+/).filter(Boolean);
   const match = n => words.every(w => n.ara.includes(w));
   if (!words.length) { $("liste").innerHTML = ""; return; }
-  const found = osm.filter(match);
+  const found = alanlar.filter(match);
   $("liste").innerHTML = found.slice(0, MAX).map(n => entry(n, "")).join("")
     || `<div class="entry">Bulunamadı. Daha kısa bir ad dene ya da komşu ilçeyi yaz.</div>`;
   if (found.length > MAX) $("liste").innerHTML += `<div class="entry note">${found.length} sonuçtan ilk ${MAX} tanesi. Aramayı daralt.</div>`;
 }
 
 async function load(){
-  const get = url => fetch(url, {cache:"no-store"}).then(r => r.ok ? r.json() : null).catch(() => null);
-  const [o, y] = await Promise.all([get("/home/toplanma.json"), get("/home/toplanma-yerel.json")]);
-  const prep = n => ({...n, ara: fold([n.ad, n.mahalle, n.yer].filter(Boolean).join(" "))});
-  osm = ((o && o.noktalar) || []).map(prep);
+  const get = url => fetch(url, {cache:"no-cache"}).then(r => r.ok ? r.json() : null).catch(() => null);
+  const [o, y, k] = await Promise.all([get("/home/toplanma.json"), get("/home/toplanma-yerel.json"), get("/home/toplanma-konum.json")]);
+  kutu = k;
+  const prep = n => ({...n, ara: fold([n.ad, n.mahalle, n.yer, n.il].filter(Boolean).join(" "))});
+  alanlar = ((o && o.noktalar) || []).map(prep);
   /* Kutu sahibinin eklediği resmi alanlar bu bölgenin; aramadan bağımsız hep en üstte. */
-  $("yerel").innerHTML = (y || []).map(n => entry({...n, mahalle: "Kutu sahibinin eklediği"}, " yerel")).join("");
+  yerel = (y || []).map(n => ({...n, mahalle: "Kutu sahibinin eklediği", yerel: true}));
+  $("yerel").innerHTML = yerel.map(n => entry(n, " yerel")).join("");
   $("bilgi").innerHTML = o
-    ? `${osm.length} alan, OpenStreetMap ${esc(o.guncel)}.` + ((y || []).length ? ` Sarı olanları kutu sahibi ekledi.` : "")
+    ? `${alanlar.length} alan, AFAD ${esc(o.afad)}` + (o.guncel ? `, OpenStreetMap ${esc(o.guncel)}.` : ".") + (yerel.length ? ` Sarı olanları kutu sahibi ekledi.` : "")
     : `<span class="warn">Liste henüz kutuya indirilmemiş.</span> Kutu sahibi: sudo ./scripts/toplanma.py guncelle`;
   show();
+  yakin();
 }
 
 $("q").addEventListener("input", show);
+$("konum").addEventListener("input", yakin);
 load();
 </script>
 </body>

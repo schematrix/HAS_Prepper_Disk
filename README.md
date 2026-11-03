@@ -59,11 +59,12 @@ sudo ./scripts/download-content.sh
 
 ### Assembly points
 
-**http://box.lan/home/toplanma.html** ("Toplanma Alanları" on the homepage) lists disaster assembly points, searchable by neighbourhood or town name (Turkish letters fold, `cankaya` finds `Çankaya`). Each point shows its coordinates and a link that opens the phone's map app (works offline if the app has offline maps). Download the list once while the Pi has internet (about 100 KB, the download itself ~15 MB):
+**http://box.lan/home/toplanma.html** ("Toplanma Alanları" on the homepage) lists disaster assembly points, searchable by neighbourhood or town name (Turkish letters fold, `cankaya` finds `Çankaya`). Each point shows its coordinates and a link that opens the phone's map app (works offline if the app has offline maps). Save where the box stands once, and the page opens with the nearest points already listed: the box's Wi-Fi reaches only a few dozen metres, so whoever is connected is close to it. Someone elsewhere can paste a location from the phone's map app instead (GPS needs no internet). Write the list to the box once while the Pi has internet (about 4.5 MB on the box; neighbourhood names come from OpenStreetMap, a ~15 MB download):
 ```bash
 sudo ./scripts/toplanma.py guncelle
+sudo ./scripts/toplanma.py konum 37.5753 36.9228   # where the box stands
 ```
-**The list is incomplete.** It comes from OpenStreetMap, which has only about 700 assembly points in Turkey, most of them around Istanbul, Tekirdağ and Kocaeli; AFAD's official list is not openly licensed. Look up the official points for your area on e-Devlet ("Afet ve Acil Durum Toplanma Alanı Sorgulama") and add them; they show first, highlighted:
+**Where the data comes from.** About 33,000 official points come from AFAD's "Acil Durum Toplanma Alanları" layer, published as open data ("Açık Veri"), compiled by Firewall (Proxy34). `data/toplanma-afad.json` is a dated copy of it and is refreshed now and then; descriptions are left out because some contain staff names and phone numbers. About 200 more points come from OpenStreetMap (ODbL). The copy can be out of date, so check e-Devlet ("Afet ve Acil Durum Toplanma Alanı Sorgulama") when you have internet. You can add points yourself; they show first, highlighted:
 ```bash
 sudo ./scripts/toplanma.py ekle "Okul bahçesi" 37.5753 36.9228
 ./scripts/toplanma.py liste
@@ -92,11 +93,12 @@ install.sh                 main installer
 scripts/setup-ssd.sh       mounts the SSD at /library
 scripts/download-content.sh  downloads/updates ZIM files from Kiwix
 scripts/install-homepage.sh  installs the custom homepage
-scripts/toplanma.py        downloads assembly points, adds your own
+scripts/toplanma.py        writes assembly points to the box, adds your own
 config/iiab-overrides.yml  Internet-in-a-Box settings
 config/content.conf        list of content to download
 www/home/index.html        homepage
 www/home/toplanma.html     assembly points page
+data/toplanma-afad.json    AFAD assembly points (dated copy)
 ```
 
 ### Troubleshooting
@@ -188,11 +190,12 @@ sudo ./scripts/download-content.sh
 
 ### Toplanma alanları
 
-**http://box.lan/home/toplanma.html** (ana sayfada "Toplanma Alanları") afet toplanma alanlarını listeler; mahalle ya da ilçe adıyla aranır (Türkçe harflere takılmaz, `cankaya` yazınca `Çankaya` bulunur). Her alanın koordinatı ve telefondaki harita uygulamasını açan bir bağlantı vardır (uygulamada çevrimdışı harita iniyse internet gerekmez). Listeyi Pi internete bağlıyken bir kez indir (yaklaşık 100 KB, indirme ~15 MB):
+**http://box.lan/home/toplanma.html** (ana sayfada "Toplanma Alanları") afet toplanma alanlarını listeler; mahalle ya da ilçe adıyla aranır (Türkçe harflere takılmaz, `cankaya` yazınca `Çankaya` bulunur). Her alanın koordinatı ve telefondaki harita uygulamasını açan bir bağlantı vardır (uygulamada çevrimdışı harita iniyse internet gerekmez). Kutunun durduğu yeri bir kez kaydedersen sayfa en yakın alanlar listelenmiş olarak açılır: kutunun Wi-Fi'ı birkaç on metre çeker, bağlanan kişi zaten kutunun yanındadır. Başka bir yerdeki biri telefonun harita uygulamasından konumunu kopyalayıp yapıştırabilir (GPS internet istemez). Listeyi Pi internete bağlıyken bir kez kutuya yaz (kutuda yaklaşık 4,5 MB; mahalle adları OpenStreetMap'ten gelir, indirme ~15 MB):
 ```bash
 sudo ./scripts/toplanma.py guncelle
+sudo ./scripts/toplanma.py konum 37.5753 36.9228   # kutunun durduğu yer
 ```
-**Liste eksiktir.** OpenStreetMap'ten gelir ve Türkiye'de yalnızca 700 kadar toplanma alanı vardır, çoğu İstanbul, Tekirdağ ve Kocaeli'de; AFAD'ın resmi listesi açık lisanslı değil. Bölgendeki resmi alanları e-Devlet'te "Afet ve Acil Durum Toplanma Alanı Sorgulama" ile bul ve ekle; eklediklerin listenin başında, renkli görünür:
+**Veri nereden geliyor.** 33 bin kadar resmi alan, AFAD'ın "Açık Veri" olarak yayımladığı "Acil Durum Toplanma Alanları" katmanından gelir; veriyi Firewall (Proxy34) derledi. `data/toplanma-afad.json` bu katmanın tarihli kopyasıdır ve ara ara güncellenir; açıklamalar alınmadı, çünkü bazılarında personel adı ve telefonu yazıyor. 200 kadar alan daha OpenStreetMap'ten gelir (ODbL). Kopya eskimiş olabilir; internet varken e-Devlet'te "Afet ve Acil Durum Toplanma Alanı Sorgulama" ile kontrol et. Kendin de alan ekleyebilirsin; eklediklerin listenin başında, renkli görünür:
 ```bash
 sudo ./scripts/toplanma.py ekle "Okul bahçesi" 37.5753 36.9228
 ./scripts/toplanma.py liste
@@ -221,11 +224,12 @@ install.sh                   ana kurulum betiği
 scripts/setup-ssd.sh         SSD'yi /library klasörüne bağlar
 scripts/download-content.sh  Kiwix'ten ZIM dosyalarını indirir/günceller
 scripts/install-homepage.sh  özel ana sayfayı kurar
-scripts/toplanma.py          toplanma alanlarını indirir, kendi alanlarını ekler
+scripts/toplanma.py          toplanma alanlarını kutuya yazar, kendi alanlarını ekler
 config/iiab-overrides.yml    Internet-in-a-Box ayarları
 config/content.conf          indirilecek içerik listesi
 www/home/index.html          ana sayfa
 www/home/toplanma.html       toplanma alanları sayfası
+data/toplanma-afad.json      AFAD toplanma alanları (tarihli kopya)
 ```
 
 ### Sorun giderme
