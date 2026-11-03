@@ -11,7 +11,7 @@
 set -euo pipefail
 
 DUYURU=/library/www/html/home/duyuru.json
-DATA=/var/lib/has-pano/guvendeyim.json
+DATA=/var/lib/has-pano/guvendeyim.jsonl
 
 die(){ echo "HATA / ERROR: $*" >&2; exit 1; }
 [ "$EUID" -eq 0 ] || die "sudo ile çalıştır / run with sudo"
@@ -29,7 +29,7 @@ json.dump({"metin": sys.argv[1][:500], "zaman": datetime.datetime.now().astimezo
     [ -f "$DATA" ] || { echo "Kayıt yok / no entries"; exit 0; }
     python3 -c 'import json, sys
 q = sys.argv[2].casefold()
-for e in json.load(open(sys.argv[1], encoding="utf-8")):
+for e in map(json.loads, open(sys.argv[1], encoding="utf-8")):
     line = "  ".join((e["id"], e["zaman"][:16], e["durum"], e["ad"], e["yer"], e["mesaj"]))
     if q in line.casefold():
         print(line)' "$DATA" "${2:-}";;
@@ -40,12 +40,12 @@ for e in json.load(open(sys.argv[1], encoding="utf-8")):
     systemctl stop has-pano-api
     rc=0
     python3 -c 'import json, os, sys
-entries = json.load(open(sys.argv[1], encoding="utf-8"))
-kept = [e for e in entries if e["id"] != sys.argv[2]]
-if len(kept) == len(entries):
+lines = open(sys.argv[1], encoding="utf-8").readlines()
+kept = [l for l in lines if json.loads(l)["id"] != sys.argv[2]]
+if len(kept) == len(lines):
     sys.exit(1)
 with open(sys.argv[1] + ".tmp", "w", encoding="utf-8") as f:
-    json.dump(kept, f, ensure_ascii=False)
+    f.writelines(kept)
 os.replace(sys.argv[1] + ".tmp", sys.argv[1])' "$DATA" "$2" || rc=$?
     [ "$active" = active ] && systemctl start has-pano-api
     [ "$rc" -eq 0 ] || die "$2 numaralı kayıt yok / no such entry"

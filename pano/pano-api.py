@@ -16,14 +16,19 @@ the box owner wipes everything with scripts/pano.sh.
 import hashlib
 import json
 import os
+import re
 import secrets
+import shutil
+import sys
 import threading
 import time
 from datetime import datetime
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlparse
 
-DATA = os.path.join(os.environ.get("STATE_DIRECTORY", "/var/lib/has-pano"), "guvendeyim.json")
+# Satır başına bir kayıt: yeni kayıt dosyanın sonuna eklenir, elektrik kesilirse en fazla son satır yarım kalır.
+# One entry per line: new entries are appended, a power cut can only cut off the last line.
+DATA = os.path.join(os.environ.get("STATE_DIRECTORY", "/var/lib/has-pano"), "guvendeyim.jsonl")
 PORT = int(os.environ.get("PORT", "8098"))
 MAX_ENTRIES = 20000
 LIMITS = {"ad": 60, "yer": 80, "mesaj": 280}
@@ -37,17 +42,43 @@ fails = {}
 
 
 def load():
+    entries, bad = [], 0
     try:
-        with open(DATA, encoding="utf-8") as f:
-            return json.load(f)
-    except (OSError, ValueError):
+        with open(DATA, encoding="utf-8", errors="replace") as f:
+            for line in f:
+                try:
+                    entries.append(json.loads(line))
+                except ValueError:
+                    bad += 1
+    except FileNotFoundError:
         return []
+    if bad:
+        # Dosya yedeklenip okunabilen kayıtlarla yeniden yazılır; yoksa yeni kayıt yarım kalmış satırın arkasına eklenirdi.
+        # Keep the file aside and rewrite the readable entries, or the next entry would be glued to a cut-off line.
+        backup = f"{DATA}.bozuk-{datetime.now():%Y%m%d-%H%M%S}"
+        shutil.copy2(DATA, backup)
+        save(entries)
+        print(f"{bad} satır okunamadı, yedek / unreadable lines, backup: {backup}", file=sys.stderr, flush=True)
+    return entries
+
+
+def line(e):
+    return json.dumps(e, ensure_ascii=False) + "\n"
+
+
+def append(e):
+    with open(DATA, "a", encoding="utf-8") as f:
+        f.write(line(e))
+        f.flush()
+        os.fsync(f.fileno())
 
 
 def save(entries):
     tmp = DATA + ".tmp"
     with open(tmp, "w", encoding="utf-8") as f:
-        json.dump(entries, f, ensure_ascii=False)
+        f.writelines(line(e) for e in entries)
+        f.flush()
+        os.fsync(f.fileno())
     os.replace(tmp, DATA)
 
 
@@ -59,7 +90,7 @@ FOLD = str.maketrans("çğıöşüâîû", "cgiosuaiu")
 
 
 def norm(s):
-    return " ".join(s.replace("İ", "i").replace("I", "ı").lower().translate(FOLD).split())
+    return " ".join(re.findall(r"\w+", s.replace("İ", "i").replace("I", "ı").lower().translate(FOLD)))
 
 
 def clean(v, limit):
@@ -99,7 +130,8 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(404, {"error": "bulunamadı / not found"})
         words = norm(parse_qs(url.query).get("q", [""])[0][:100]).split()
         with lock:
-            found = [e for e in reversed(entries) if all(w in e["ara"] for w in words)]
+            # Kelime başından eşleşir: "ali" "Halil"i bulmaz / matches at word starts, "ali" does not find "Halil"
+            found = [e for e in reversed(entries) if all(" " + w in e["ara"] for w in words)]
         self._send(200, {"toplam": len(entries), "bulunan": len(found), "kayitlar": [public(e) for e in found[:100]]})
 
     def do_POST(self):
@@ -120,12 +152,14 @@ class Handler(BaseHTTPRequestHandler):
         with lock:
             if len(self.recent(added)) >= RATE_N:
                 return self._send(429, {"error": "Çok fazla kayıt, biraz bekleyin / too many entries, wait a bit"})
+            # Dolunca eski kayıtlar silinmez, yeni kayıt reddedilir / when full, new entries are refused instead of dropping old ones
+            if len(entries) >= MAX_ENTRIES:
+                return self._send(503, {"error": "Pano dolu, kutu sahibine haber verin / the board is full, tell the box owner"})
             added[self.ip()].append(time.time())
             e.update(id=secrets.token_hex(6), durum=data["durum"], zaman=datetime.now().astimezone().isoformat(timespec="seconds"),
-                     kod=hashlib.sha256(kod.encode()).hexdigest(), ara=norm(" ".join((e["ad"], e["yer"], e["mesaj"]))))
+                     kod=hashlib.sha256(kod.encode()).hexdigest(), ara=" " + norm(" ".join((e["ad"], e["yer"], e["mesaj"]))))
+            append(e)
             entries.append(e)
-            del entries[:-MAX_ENTRIES]
-            save(entries)
         self._send(201, {"id": e["id"], "kod": kod})
 
     def delete(self, data):
