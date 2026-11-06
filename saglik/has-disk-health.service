@@ -1,0 +1,6 @@
+[Unit]
+Description=HAS_PrepperDisk: disk ve güç sağlığı / disk and power health
+
+[Service]
+Type=oneshot
+ExecStart=@REPO@/scripts/disk-health.sh

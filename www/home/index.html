@@ -62,6 +62,7 @@
   .legend span{display:flex;align-items:center;gap:6px}
   .legend .fold{margin-top:0;transform:scale(.8)}
 
+  #disk td{color:#B00000;font-weight:bold;font-size:12px}
   .copy{text-align:center;font-size:10px;color:#444;margin:12px 0 4px;line-height:1.6}
 
   @media (max-width:640px){ .hide-s{display:none} .logo{font-size:22px} }
@@ -91,6 +92,7 @@
 
   <div class="crumb"><a href="/home">HAS_PrepperDisk Ana Sayfa</a></div>
   <div class="small" style="margin:0 2px 6px" id="now"></div>
+  <table class="forumline" id="disk" hidden><tr><th>Disk ve güç uyarısı</th></tr></table>
 
   <div class="scroll">
   <table class="forumline" id="forums">
@@ -250,6 +252,13 @@ document.getElementById("search").addEventListener("submit", e => {
     ? `/kiwix/search?books.name=${encodeURIComponent(book)}&pattern=${encodeURIComponent(q)}`
     : `/kiwix/search?pattern=${encodeURIComponent(q)}`;
 });
+
+fetch("/home/disk.json", {cache:"no-store"}).then(r => r.ok ? r.json() : null).then(d => {
+  if (!d || !d.warnings || !d.warnings.length) return;
+  const box = document.getElementById("disk");
+  for (const w of d.warnings) box.insertRow().insertCell().textContent = w;
+  box.hidden = false;
+}).catch(() => {});
 
 loadBooks().then(render);
 </script>
