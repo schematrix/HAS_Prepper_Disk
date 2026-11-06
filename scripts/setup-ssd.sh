@@ -41,7 +41,7 @@ if [ -d "$MP" ] && [ -n "$(ls -A "$MP" 2>/dev/null)" ] && ! mountpoint -q "$MP";
   echo "Uyarı / warning: $MP boş değil, içindekiler SSD bağlanınca gizlenecek / is not empty and will be hidden by the SSD"
 fi
 
-cp /etc/fstab /etc/fstab.bak.$(date +%Y%m%d%H%M%S)
+cp /etc/fstab "/etc/fstab.bak.$(date +%Y%m%d%H%M%S)"
 # Bu disk ya da /library için eski satırları sil / remove old lines for this disk or /library
 sed -i "/$UUID/d" /etc/fstab
 sed -i '\#[[:space:]]/library[[:space:]]#d' /etc/fstab
