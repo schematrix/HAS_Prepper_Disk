@@ -217,7 +217,7 @@ function render(books){
       if (i.zim) {
         if (books === null) { url = "/kiwix/"; status = "Kütüphaneden açın"; }
         else {
-          const b = books.filter(b => b.id.startsWith(i.zim)).sort((a,z) => a.id < z.id ? 1 : -1)[0];
+          const b = books.filter(b => b.id.startsWith(i.zim + "_")).sort((a,z) => a.id < z.id ? 1 : -1)[0];
           if (b) {
             used.add(b.id);
             url = b.href;
@@ -258,9 +258,13 @@ function render(books){
      Bu sayfa internet bağlantısı olmadan çalışır.`;
 }
 
-const d = new Date();
-document.getElementById("now").textContent =
-  "Sunucu saati: " + d.toLocaleDateString("tr-TR") + " " + d.toLocaleTimeString("tr-TR",{hour:"2-digit",minute:"2-digit"});
+/* Saat, telefonun değil Pi'nin saatidir: HTTP yanıtının Date başlığından okunur. */
+fetch(location.href, {method:"HEAD", cache:"no-store"}).then(r => {
+  const d = new Date(r.headers.get("Date"));
+  if (isNaN(d)) return;
+  document.getElementById("now").textContent =
+    "Sunucu saati: " + d.toLocaleDateString("tr-TR") + " " + d.toLocaleTimeString("tr-TR",{hour:"2-digit",minute:"2-digit"});
+}).catch(() => {});
 
 document.getElementById("search").addEventListener("submit", e => {
   e.preventDefault();
