@@ -3,6 +3,28 @@
 **[English](#english) · [Türkçe](#türkçe)**
 
 ---
+## Katkıda Bulunanlar / Contributors
+
+HAS_PrepperDisk topluluğun emeğiyle büyüyor. Her katkı gerçek bir Raspberry Pi 5 üzerinde denendi ve sonra eklendi. Emeği geçen herkese teşekkürler.
+
+HAS_PrepperDisk grows with the community's work. Every contribution below was tested on a real Raspberry Pi 5 before it was merged. Thank you to everyone who helped.
+
+| PR | Katkıda bulunan / Contributor | Ne getirdi | What it added |
+|---|---|---|---|
+| [#3](https://github.com/schematrix/HAS_Prepper_Disk/pull/3) | [@turer73](https://github.com/turer73), doğrulama / verified by [@volthdl](https://github.com/volthdl) | Kaldırılmış ZIM adlarını düzeltti, Türkçe içerikleri (Vikikitap, Vikisöz, Vikikaynak, Vikisözlük, PhET, iFixit) ekledi, sürümleri Kiwix kataloğundan bulup her indirmeyi SHA-256 ile doğrulayan indirme betiği | Fixed retired ZIM names, added Turkish content (Wikibooks, Wikiquote, Wikisource, Wiktionary, PhET, iFixit), catalog-based versions and SHA-256 verification for every download |
+| [#10](https://github.com/schematrix/HAS_Prepper_Disk/pull/10) | [@Proxy34](https://github.com/Proxy34) | Ana sayfada telefonun değil kutunun saati, ZIM dosyalarının doğru eşleşmesi ve README düzeltmeleri | Homepage shows the box's clock instead of the phone's, correct ZIM matching and README fixes |
+| [#11](https://github.com/schematrix/HAS_Prepper_Disk/pull/11) | [@Proxy34](https://github.com/Proxy34) | AFAD, CDC ve EPA kaynaklı, internetsiz açılan Türkçe acil durum sayfası | Turkish emergency page sourced from AFAD, CDC and EPA, works offline |
+| [#12](https://github.com/schematrix/HAS_Prepper_Disk/pull/12) | [@efeesrefinal](https://github.com/efeesrefinal) | Kutunun durumunu tek komutla gösteren salt okunur sağlık kontrolü (`status.sh`) | Read-only health check that shows the box's state in one command (`status.sh`) |
+| [#13](https://github.com/schematrix/HAS_Prepper_Disk/pull/13) | [@efeesrefinal](https://github.com/efeesrefinal) | Her PR'da kabuk betiklerini otomatik denetleyen ShellCheck CI | ShellCheck CI that checks the shell scripts on every PR |
+| [#16](https://github.com/schematrix/HAS_Prepper_Disk/pull/16) | [@Proxy34](https://github.com/Proxy34) | Telefonda rahat okunan ve parmakla kolay basılan ana sayfa | Homepage that is easy to read and tap on phones |
+| [#17](https://github.com/schematrix/HAS_Prepper_Disk/pull/17) | [@Proxy34](https://github.com/Proxy34) | Disk dolarken, SSD yıpranırken ya da güç yetersizken ana sayfada uyarı | Homepage warnings when the disk is filling up, the SSD is wearing out or power is insufficient |
+| [#28](https://github.com/schematrix/HAS_Prepper_Disk/pull/28) | [@isihussain](https://github.com/isihussain) | İnternetsiz ortamda saati korumak için RTC pili notu | RTC battery note for keeping the time without internet |
+| [#29](https://github.com/schematrix/HAS_Prepper_Disk/pull/29) | [@isihussain](https://github.com/isihussain) | Windows'ta klonlanan betiklerin Pi'de bozulmaması için satır sonu ayarı (`.gitattributes`) | Line-ending rules (`.gitattributes`) so scripts cloned on Windows still run on the Pi |
+
+İnceleme ve testleriyle açık PR'lara destek olan [@volthdl](https://github.com/volthdl), [@FurkanKY](https://github.com/FurkanKY), [@Proxy34](https://github.com/Proxy34) ve [@ramazansancar](https://github.com/ramazansancar)'a da ayrıca teşekkürler.
+
+Special thanks also to [@volthdl](https://github.com/volthdl), [@FurkanKY](https://github.com/FurkanKY), [@Proxy34](https://github.com/Proxy34) and [@ramazansancar](https://github.com/ramazansancar) for reviewing and testing open PRs.
+
 
 ## English
 
@@ -281,3 +303,5 @@ SD kart ve SSD'deki boş alanı, web, Kiwix, hotspot ve DHCP servislerini, hotsp
 ### Lisans
 
 Bu repodaki betikler ve ana sayfa [MIT Lisansı](LICENSE) ile yayınlanmıştır. Internet-in-a-Box, Kiwix ve indirilen tüm içerikler (Wikipedia, OpenStreetMap vb.) kendi lisanslarına tabidir. Bu proje Internet-in-a-Box veya Kiwix ile bağlantılı değildir.
+
+
