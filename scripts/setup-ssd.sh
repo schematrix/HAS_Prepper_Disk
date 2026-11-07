@@ -13,8 +13,17 @@ die(){ echo "HATA / ERROR: $*" >&2; exit 1; }
 [ -n "$DEV" ] || { lsblk -o NAME,SIZE,FSTYPE,LABEL,MOUNTPOINTS; die "disk belirt / give a disk, e.g. /dev/nvme0n1"; }
 [ -b "$DEV" ] || die "$DEV bulunamadı / not found"
 
-ROOTDEV=$(findmnt -no SOURCE /)
-case "$ROOTDEV" in "$DEV"*) die "$DEV sistem diski / is the system disk";; esac
+# Sistemin çalıştığı fiziksel diske dokunma. Pi NVMe'den açılıyorsa /dev/nvme0n1p1 de sistem diskidir.
+# Never touch the physical disk the system runs from (e.g. /dev/nvme0n1p1 when booting from NVMe).
+disk_of(){
+  local d="$1" p
+  p=$(lsblk -ndo PKNAME "$d" 2>/dev/null) || return 1
+  while [ -n "$p" ]; do d="/dev/$p"; p=$(lsblk -ndo PKNAME "$d" 2>/dev/null) || return 1; done
+  basename "$d"
+}
+ROOTDISK=$(disk_of "$(findmnt -no SOURCE /)") || die "sistem diski bulunamadı / could not find the system disk"
+DEVDISK=$(disk_of "$DEV") || die "$DEV okunamadı / could not read $DEV"
+[ "$DEVDISK" != "$ROOTDISK" ] || die "$DEV sistem diskinde ($ROOTDISK) / is on the system disk"
 
 if mountpoint -q "$MP" && [ "$(findmnt -no SOURCE "$MP")" = "$DEV" ]; then
   echo "$DEV zaten $MP altında bağlı / already mounted at $MP"; exit 0
