@@ -20,6 +20,9 @@ Built on [Internet-in-a-Box](https://github.com/iiab/iiab) and [Kiwix](https://k
 | 5V/5A USB-C power supply | The official one is recommended |
 | Active cooler | The Pi 5 and SSD get warm |
 | Ethernet cable | Recommended during install |
+| RTC battery (optional) | Keeps system time offline (e.g. official SC1163) |
+
+> **RTC battery note:** Without internet access, the Pi 5 cannot sync time via NTP. When power is lost, the internal RTC clock resets unless a backup battery is connected to the J5 (BAT) connector. If you use the official rechargeable Panasonic ML-2020 battery (SC1163), enable trickle-charging by adding `dtparam=rtc_bbat_vchg=3000000` to `/boot/firmware/config.txt`. *(Do not enable charging if using standard non-rechargeable CR2032 cells).*
 
 
 <img width="572" height="774" alt="Screenshot 2026-10-30 at 23 22 21" src="https://github.com/user-attachments/assets/0f8cf21f-2407-4346-a9ec-e466cc926ade" />
@@ -47,8 +50,9 @@ sudo ./scripts/setup-ssd.sh /dev/nvme0n1
 ```bash
 sudo ./install.sh
 ```
+During the install Internet-in-a-Box asks three things of its own: a new password for the `iiab-admin` user (used for `http://<pi-ip>/admin`, write it down), a key press to confirm you will re-run the command if something goes wrong, and at the end Enter to reboot. After the reboot run `sudo ./install.sh` once more; it skips the finished part and installs the homepage.
 
-**5. Download content.** Edit `config/content.conf` to choose what to download, then run the script below. The defaults need about 150 GB, and downloads can take many hours. If a download is interrupted, re-run the script and it resumes.
+**5. Download content.** Edit `config/content.conf` to choose what to download, then run the script below. The defaults need about 160 GB, and downloads can take many hours. If a download is interrupted, re-run the script and it resumes. The script looks up the newest version of each ZIM in the Kiwix catalog, checks free disk space before each download and verifies every file against its SHA-256 checksum.
 ```bash
 sudo ./scripts/download-content.sh
 ```
@@ -80,6 +84,17 @@ The Pi's built-in Wi-Fi is dedicated to the hotspot. If the Pi needs internet te
 
 **Never run `sudo iiab-network` while a USB Wi-Fi adapter is plugged in.** It may move the hotspot onto the adapter. Unplug it first.
 
+### Disk and power health
+
+Every 6 hours (and 5 minutes after boot) `scripts/disk-health.sh` checks the `/library` disk and the Pi's power supply. If something is wrong, a red warning appears at the top of the homepage:
+
+- the disk was remounted read-only or has file system errors,
+- the disk's own SMART test reports a failure or pre-failure, or an NVMe SSD has used 90% of its life,
+- the disk is 95% full,
+- the Pi is running on, or has had, under-voltage (a weak power supply or battery can corrupt the disk).
+
+Check now: `sudo ./scripts/disk-health.sh`. Disks behind some USB adapters don't report SMART; those checks are then skipped silently.
+
 ### Repo layout
 
 ```
@@ -89,14 +104,23 @@ scripts/download-content.sh  downloads/updates ZIM files from Kiwix
 scripts/install-homepage.sh  installs the custom homepage
 scripts/install-telefon.sh   sets up phone downloads
 scripts/download-app.sh      downloads the Kiwix Android app for phones
+scripts/status.sh          health check: disk, services, hotspot, content, power
+scripts/disk-health.sh     disk and power health check (saglik/: its systemd timer)
 config/iiab-overrides.yml  Internet-in-a-Box settings
 config/content.conf        list of content to download
 www/home/index.html        homepage
+www/home/acil.html         emergency page (Turkish, sourced from AFAD and EPA)
 www/home/telefon.html      phone downloads page
 telefon/                   nginx config for phone downloads
 ```
 
 ### Troubleshooting
+
+Start with the health check. It only reads, needs no sudo, and points to the matching fix below:
+```bash
+./scripts/status.sh
+```
+It checks free space on the SD card and SSD, the web, Kiwix, hotspot and DHCP services, the hotspot bridge, which ZIMs from `config/content.conf` are missing or not yet in the Kiwix library, unfinished downloads, CPU temperature and under-voltage. It exits with 1 if it finds a problem, so it can also run from cron.
 
 - **`ssh user@hostname.local` stops working after install.** Internet-in-a-Box renames the Pi to `box`. Use `ssh user@box.local` or the Pi's IP address. To find the IP, run `arp -a` on your computer or check your router's device list.
 - **Chromium says the profile is locked.** This also comes from the hostname change. Click "Unlock Profile", or run `rm -f ~/.config/chromium/Singleton*`.
@@ -150,6 +174,9 @@ Raspberry Pi 5 üzerinde çevrimdışı bilgi arşivi. Wikipedia, haritalar, tı
 | 5V/5A USB-C adaptör | Resmi adaptör önerilir |
 | Aktif soğutucu | Pi 5 ve SSD ısınır |
 | Ethernet kablosu | Kurulum sırasında önerilir |
+| RTC pili (isteğe bağlı) | İnternetsiz ortamda sistem saatini korur (örn. resmi SC1163) |
+
+> **RTC pili notu:** Afet durumunda internet bağlantısı olmadığı için Pi 5 zamanı NTP üzerinden eşitleyemez. Elektrik kesildiğinde sistem saatinin sıfırlanmaması için Pi 5'in J5 (BAT) yuvasına bir yedek pil takılması önerilir. Resmi şarj edilebilir Panasonic ML-2020 pil (SC1163) kullanıyorsanız, `/boot/firmware/config.txt` dosyasına `dtparam=rtc_bbat_vchg=3000000` ekleyerek şarj özelliğini açabilirsiniz. *(Standart şarj edilmeyen CR2032 pillerde bu ayarı kesinlikle açmayın).*
 
 ### Kurulum
 
@@ -173,8 +200,9 @@ sudo ./scripts/setup-ssd.sh /dev/nvme0n1
 ```bash
 sudo ./install.sh
 ```
+Kurulum sırasında Internet-in-a-Box kendisi üç şey sorar: `iiab-admin` kullanıcısı için yeni bir şifre (`http://<pi-ip>/admin` girişinde kullanılır, bir yere not et), bir sorun olursa komutu tekrar çalıştıracağını onaylaman için bir tuşa basman ve en sonda yeniden başlatmak için Enter. Pi açıldıktan sonra `sudo ./install.sh` komutunu bir kez daha çalıştır; biten kısmı atlar ve ana sayfayı kurar.
 
-**5. İçerikleri indir.** Ne indirileceğini `config/content.conf` dosyasından seç, sonra aşağıdaki betiği çalıştır. Varsayılan liste yaklaşık 150 GB tutar ve indirme saatler sürebilir. İndirme yarıda kalırsa betiği tekrar çalıştırman yeterli, kaldığı yerden devam eder.
+**5. İçerikleri indir.** Ne indirileceğini `config/content.conf` dosyasından seç, sonra aşağıdaki betiği çalıştır. Varsayılan liste yaklaşık 160 GB tutar ve indirme saatler sürebilir. İndirme yarıda kalırsa betiği tekrar çalıştırman yeterli, kaldığı yerden devam eder. Betik her ZIM'in en yeni sürümünü Kiwix kataloğundan bulur, her indirmeden önce boş alanı kontrol eder ve inen dosyayı SHA-256 özetiyle doğrular.
 ```bash
 sudo ./scripts/download-content.sh
 ```
@@ -206,6 +234,17 @@ Pi'nin dahili Wi-Fi kartı sadece hotspot için kullanılıyor. Pi'nin geçici o
 
 **USB Wi-Fi adaptörü takılıyken asla `sudo iiab-network` çalıştırma.** Hotspot'u adaptöre taşıyabilir. Önce adaptörü çıkar.
 
+### Disk ve güç sağlığı
+
+`scripts/disk-health.sh` 6 saatte bir (ve açılıştan 5 dakika sonra) `/library` diskine ve Pi'nin güç kaynağına bakar. Bir sorun varsa ana sayfanın en üstünde kırmızı bir uyarı çıkar:
+
+- disk salt okunur moda geçmiş ya da dosya sisteminde hata var,
+- diskin kendi SMART testi arıza ya da arıza öncesi belirti bildiriyor, veya NVMe SSD ömrünün %90'ı dolmuş,
+- disk %95 dolu,
+- Pi düşük voltajla çalışıyor ya da çalıştı (zayıf güç kaynağı ya da pil diski bozabilir).
+
+Hemen kontrol: `sudo ./scripts/disk-health.sh`. Bazı USB adaptörlerinin arkasındaki diskler SMART bilgisi vermez; o zaman bu kontrol sessizce atlanır.
+
 ### Repo yapısı
 
 ```
@@ -215,14 +254,23 @@ scripts/download-content.sh  Kiwix'ten ZIM dosyalarını indirir/günceller
 scripts/install-homepage.sh  özel ana sayfayı kurar
 scripts/install-telefon.sh   telefona indirmeyi kurar
 scripts/download-app.sh      telefonlar için Kiwix Android uygulamasını indirir
+scripts/status.sh            sağlık kontrolü: disk, servisler, hotspot, içerik, güç
+scripts/disk-health.sh       disk ve güç sağlığı denetimi (saglik/: systemd zamanlayıcısı)
 config/iiab-overrides.yml    Internet-in-a-Box ayarları
 config/content.conf          indirilecek içerik listesi
 www/home/index.html          ana sayfa
+www/home/acil.html           acil durum sayfası (AFAD ve EPA kaynaklı)
 www/home/telefon.html        telefona indirme sayfası
 telefon/                     telefona indirme için nginx ayarı
 ```
 
 ### Sorun giderme
+
+Önce sağlık kontrolünü çalıştır. Sadece okur, sudo gerektirmez ve aşağıdaki ilgili çözüme yönlendirir:
+```bash
+./scripts/status.sh
+```
+SD kart ve SSD'deki boş alanı, web, Kiwix, hotspot ve DHCP servislerini, hotspot köprüsünü, `config/content.conf` içindeki ZIM'lerden eksik olanları ya da Kiwix kütüphanesine henüz eklenmemiş olanları, yarım kalan indirmeleri, işlemci sıcaklığını ve düşük voltajı kontrol eder. Sorun bulursa 1 koduyla çıkar, bu yüzden cron ile de çalıştırılabilir.
 
 - **Kurulumdan sonra `ssh kullanici@hostname.local` çalışmıyor.** Internet-in-a-Box cihazın adını `box` yapar. `ssh kullanici@box.local` ya da Pi'nin IP adresini kullan. IP adresini bulmak için bilgisayarında `arp -a` çalıştır ya da modeminin cihaz listesine bak.
 - **Chromium "profile is locked" hatası veriyor.** Bu da cihaz adının değişmesinden kaynaklanır. "Unlock Profile" butonuna tıkla ya da `rm -f ~/.config/chromium/Singleton*` komutunu çalıştır.
