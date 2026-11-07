@@ -141,7 +141,6 @@ Raspberry Pi 5 üzerinde çevrimdışı bilgi arşivi. Wikipedia, haritalar, tı
 | 5V/5A USB-C adaptör | Resmi adaptör önerilir |
 | Aktif soğutucu | Pi 5 ve SSD ısınır |
 | Ethernet kablosu | Kurulum sırasında önerilir |
-
 | RTC pili (isteğe bağlı) | İnternetsiz ortamda sistem saatini korur (örn. resmi SC1163) |
 
 > **RTC pili notu:** Afet durumunda internet bağlantısı olmadığı için Pi 5 zamanı NTP üzerinden eşitleyemez. Elektrik kesildiğinde sistem saatinin sıfırlanmaması için Pi 5'in J5 (BAT) yuvasına bir yedek pil takılması önerilir. Resmi şarj edilebilir Panasonic ML-2020 pil (SC1163) kullanıyorsanız, `/boot/firmware/config.txt` dosyasına `dtparam=rtc_bbat_vchg=3000000` ekleyerek şarj özelliğini açabilirsiniz. *(Standart şarj edilmeyen CR2032 pillerde bu ayarı kesinlikle açmayın).*
