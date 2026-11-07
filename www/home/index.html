@@ -24,6 +24,7 @@
 
   .crumb{font-weight:bold;font-size:12px;margin:8px 2px}
   .small{font-size:10px;color:#444}
+  .duyuru{font-size:14px;font-weight:bold;line-height:1.5;white-space:pre-line}
 
   /* tablolar */
   .scroll{overflow-x:auto}
@@ -72,7 +73,7 @@
     body{font-size:14px}
     .wrap{padding:4px}
     .navlinks{font-size:15px;line-height:2.2}
-    .navlinks a{margin:0 14px 0 0}
+    .navlinks a{margin:0 14px 0 0;display:inline-block}
     .crumb{font-size:14px}
     .small{font-size:12px}
     .forumline th{font-size:13px}
@@ -96,7 +97,7 @@
       <div class="slogan">Çevrimdışı bilgi arşivi &mdash; internet olmasa da açık</div>
     </div>
     <div class="navlinks">
-      <a href="/home/acil.html" class="acil">Acil Durum</a><a href="/kiwix/">Kütüphane</a><a href="/maps">Haritalar</a><a href="/admin">Yönetim</a>
+      <a href="/home/acil.html" class="acil">Acil Durum</a><a href="/home/guvendeyim.html">Güvendeyim</a><a href="/kiwix/">Kütüphane</a><a href="/maps">Haritalar</a><a href="/admin">Yönetim</a>
     </div>
   </div>
 
@@ -110,6 +111,7 @@
   </td></tr></table>
 
   <div class="crumb"><a href="/home">HAS_PrepperDisk Ana Sayfa</a></div>
+  <table class="forumline" id="duyuru" hidden><tr><th>Duyuru</th></tr><tr><td class="row1 duyuru"></td></tr></table>
   <div class="small" style="margin:0 2px 6px" id="now"></div>
   <table class="forumline" id="disk" hidden><tr><th>Disk ve güç uyarısı</th></tr></table>
 
@@ -289,6 +291,13 @@ fetch("/home/disk.json", {cache:"no-store"}).then(r => r.ok ? r.json() : null).t
   if (!d || !d.warnings || !d.warnings.length) return;
   const box = document.getElementById("disk");
   for (const w of d.warnings) box.insertRow().insertCell().textContent = w;
+  box.hidden = false;
+}).catch(() => {});
+
+fetch("/home/duyuru.json", {cache:"no-store"}).then(r => r.ok ? r.json() : null).then(d => {
+  if (!d || !d.metin) return;
+  const box = document.getElementById("duyuru");
+  box.querySelector(".duyuru").textContent = `${d.metin}\n(${new Date(d.zaman).toLocaleString("tr-TR", {dateStyle:"short", timeStyle:"short"})})`;
   box.hidden = false;
 }).catch(() => {});
 
