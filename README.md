@@ -67,7 +67,7 @@ The Wi-Fi reaches only a few dozen metres. **http://box.lan/home/telefon.html** 
 ```bash
 sudo ./scripts/download-app.sh
 ```
-It fetches two builds from Kiwix's GitHub releases, about 70 MB for current phones and 64 MB for older ones, each checked against the SHA-256 GitHub publishes; re-run it later to get a newer version. iPhones can't install the app from the box, but if Kiwix is already installed they can open the downloaded files.
+It fetches two builds from Kiwix's GitHub releases, about 70 MB for current phones and 64 MB for older ones, each checked against the SHA-256 GitHub publishes; re-run it later to get a newer version. iPhones can't install the app from the box, since Apple only allows the App Store; the page links to Kiwix on the App Store for phones with mobile data, and the downloaded files open in Kiwix once it is installed.
 
 ### Optional: internet over a USB Wi-Fi adapter
 
@@ -217,7 +217,7 @@ Wi-Fi yalnızca birkaç on metre çeker. **http://box.lan/home/telefon.html** (a
 ```bash
 sudo ./scripts/download-app.sh
 ```
-Kiwix'in GitHub sürümlerinden iki paket indirir, güncel telefonlar için yaklaşık 70 MB, eskiler için 64 MB; her biri GitHub'ın yayımladığı SHA-256 ile doğrulanır. Yeni sürüm için betiği tekrar çalıştır. iPhone'a uygulama kutudan kurulamaz, ama Kiwix zaten kuruluysa indirilen dosyalar açılabilir.
+Kiwix'in GitHub sürümlerinden iki paket indirir, güncel telefonlar için yaklaşık 70 MB, eskiler için 64 MB; her biri GitHub'ın yayımladığı SHA-256 ile doğrulanır. Yeni sürüm için betiği tekrar çalıştır. Apple yalnızca App Store'dan kuruluma izin verdiği için iPhone'a uygulama kutudan kurulamaz; sayfa, mobil verisi olan telefonlar için App Store'daki Kiwix'e bağlantı verir, indirilen dosyalar Kiwix kurulunca açılır.
 
 ### İsteğe bağlı: USB Wi-Fi adaptörüyle internet
 
