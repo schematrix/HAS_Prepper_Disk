@@ -78,6 +78,7 @@ fi
 # -------------------------------------------------------------- 3. ana sayfa
 say "3/3 Ana sayfa ve Güvendeyim panosu / homepage and board"
 "$REPO/scripts/install-homepage.sh"
+"$REPO/scripts/install-disk-health.sh"
 "$REPO/scripts/install-pano.sh"
 
 IP=$(hostname -I | awk '{print $1}')
