@@ -12,6 +12,8 @@
 #
 # Kullanım / usage:  sudo ./scripts/download-content.sh [config-dosyası]
 # Ortam / environment:  DEST=/library/zims/content  RESERVE_GB=5 (boş bırakılacak pay / headroom to keep free)
+#   CHECK_ONLY=1  indirmez, yeni sürümleri "UPDATE <klasör> <ad başı> <dosya> <bayt>" satırı olarak yazar
+#                 downloads nothing, prints newer versions as "UPDATE <folder> <prefix> <file> <bytes>" (auto-update.sh)
 set -uo pipefail
 
 [ "$EUID" -eq 0 ] || { echo "sudo ile çalıştır / run with sudo" >&2; exit 1; }
@@ -56,6 +58,7 @@ while read -r folder prefix _; do
 
   # Yer kontrolü / free-space check: kalan boyut + pay / remaining bytes + headroom
   [ -z "$size" ] && size=$(curl -sIL -m 30 "$url" | grep -i '^content-length:' | tail -1 | tr -dc '0-9')
+  if [ -n "${CHECK_ONLY:-}" ]; then echo "UPDATE $folder $prefix $latest ${size:-?}"; continue; fi
   have=0; [ -f "$DEST/$latest.part" ] && have=$(stat -c %s "$DEST/$latest.part")
   avail=$(df -B1 --output=avail "$DEST" | tail -1 | tr -dc '0-9')
   if [ -n "$size" ] && [ "$avail" -lt $((size - have + RESERVE_GB * 1024 * 1024 * 1024)) ]; then
@@ -91,6 +94,7 @@ while read -r folder prefix _; do
     [ "$old" != "$DEST/$latest" ] && [ -f "$old" ] && { echo "-- eski sürüm siliniyor / removing $old"; rm -f "$old"; }
   done
 done < "$CONF"
+[ -n "${CHECK_ONLY:-}" ] && exit $failed
 
 echo ">> Kiwix kütüphanesi güncelleniyor / rebuilding Kiwix library"
 if command -v iiab-make-kiwix-lib >/dev/null; then

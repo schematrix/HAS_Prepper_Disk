@@ -59,6 +59,8 @@ sudo ./scripts/download-content.sh
 
 **6. Maps.** Open `http://<pi-ip>/admin` (user `iiab-admin`), go to the maps section of the **Install Content** menu and choose the regions you want.
 
+**Alternative, or if that download is blocked (e.g. in Turkey):** `sudo ./scripts/download-map.sh` cuts a vector map of Turkey (about 1.7 GB, down to zoom 15) from the [Protomaps](https://protomaps.com) planet build and installs a small map page. It only talks to `build.protomaps.com`, `github.com` and `cdn.jsdelivr.net`, and nginx serves the files as they are, so there is no extra server config. Open **http://box.lan/harita/**. It works next to the IIAB map, it does not replace it. Another region: `sudo MAP_NAME=germany MAP_BBOX=5.8,47.2,15.1,55.1 ./scripts/download-map.sh` (bbox is `west,south,east,north`). `--update` re-cuts the map when a newer planet build exists. Map data © OpenStreetMap contributors (ODbL).
+
 **7. Use it.** Join the Wi-Fi network you created and open **http://box.lan/home**.
 
 ### Optional: internet over a USB Wi-Fi adapter
@@ -87,15 +89,30 @@ Every 6 hours (and 5 minutes after boot) `scripts/disk-health.sh` checks the `/l
 
 Check now: `sudo ./scripts/disk-health.sh`. Disks behind some USB adapters don't report SMART; those checks are then skipped silently.
 
+### Automatic updates
+
+`install.sh` sets this up (on an existing install: `sudo ./scripts/install-auto-update.sh`). When the Pi gets an internet connection (Ethernet, the USB Wi-Fi adapter above, a phone hotspot), it checks which content and map have a newer version. It **never downloads on its own**: the homepage shows the list with sizes; pick items, enter the `iiab-admin` password (the one set during install, also used for `/admin`) and press **Seçilenleri güncelle**.
+
+- On a phone hotspot or another metered connection the homepage warns that the download uses mobile data.
+- If an item does not fit on the disk it cannot be selected; the old version keeps working.
+- The check runs at most every 6 hours, plus once a day for boxes that stay online.
+- Check now: `sudo ./scripts/auto-update.sh --check --force`. Update from the terminal: `sudo ./scripts/auto-update.sh --apply wikipedia_tr_all_maxi`. Logs: `journalctl -u has-update-check -u has-update-apply`
+
+**From a USB drive, without internet.** Copy `.zim` files (with their original names, e.g. `wikipedia_tr_all_maxi_2026-09.zim`) to a USB drive, anywhere up to three folders deep, and plug it into the Pi. The drive is mounted read-only and the files listed in `config/content.conf` that are missing or newer than what the box has show up in the same list, marked "(USB'den)". Before a copied file is used, the MD5 checksum stored inside every ZIM file is verified, so a damaged copy is never installed. The checksum does not prove who made the file, so only approve drives from a source you trust. The SSD that holds `/library` is never treated as a content drive, even when it is connected over USB. Use exFAT or NTFS for files over 4 GB.
+
 ### Repo layout
 
 ```
 install.sh                 main installer
 scripts/setup-ssd.sh       mounts the SSD at /library
+scripts/download-map.sh    offline vector map (Protomaps) and its page
 scripts/download-content.sh  downloads/updates ZIM files from Kiwix
 scripts/install-homepage.sh  installs the custom homepage
+scripts/auto-update.sh       checks for and applies updates
+scripts/install-auto-update.sh  installs the update services
 scripts/status.sh          health check: disk, services, hotspot, content, power
 scripts/disk-health.sh     disk and power health check (saglik/: its systemd timer)
+update/                      update services, NetworkManager hook, USB rule, nginx config
 config/iiab-overrides.yml  Internet-in-a-Box settings
 config/content.conf        list of content to download
 www/home/index.html        homepage
@@ -113,7 +130,7 @@ It checks free space on the SD card and SSD, the web, Kiwix, hotspot and DHCP se
 - **`ssh user@hostname.local` stops working after install.** Internet-in-a-Box renames the Pi to `box`. Use `ssh user@box.local` or the Pi's IP address. To find the IP, run `arp -a` on your computer or check your router's device list.
 - **Chromium says the profile is locked.** This also comes from the hostname change. Click "Unlock Profile", or run `rm -f ~/.config/chromium/Singleton*`.
 - **The hotspot doesn't appear.** Connect over Ethernet, check `sudo iiab-diagnostics`, and make sure the install finished: `/etc/iiab/install-flags/iiab-complete` must exist.
-- **Map downloads fail with "connection reset by peer".** The map server (`contabostorage.com`) is blocked in some countries, e.g. Turkey. Install Cloudflare WARP on the Pi, connect, retry the download in the admin console, then disconnect:
+- **Map downloads fail with "connection reset by peer".** The map server (`contabostorage.com`) is blocked in some countries, e.g. Turkey. The easy way out is `sudo ./scripts/download-map.sh` (step 6), which does not use that server. Otherwise install Cloudflare WARP on the Pi, connect, retry the download in the admin console, then disconnect:
   ```bash
   curl -fsSL https://pkg.cloudflareclient.com/pubkey.gpg | sudo gpg --yes --dearmor -o /usr/share/keyrings/cloudflare-warp-archive-keyring.gpg
   echo "deb [signed-by=/usr/share/keyrings/cloudflare-warp-archive-keyring.gpg] https://pkg.cloudflareclient.com/ $(. /etc/os-release; echo $VERSION_CODENAME) main" | sudo tee /etc/apt/sources.list.d/cloudflare-client.list
@@ -197,6 +214,8 @@ sudo ./scripts/download-content.sh
 
 **6. Haritalar.** `http://<pi-ip>/admin` adresine gir (kullanıcı adı `iiab-admin`), **Install Content** menüsündeki harita bölümüne git ve istediğin bölgeleri seç.
 
+**Alternatif, ya da o indirme engelliyse (ör. Türkiye'de):** `sudo ./scripts/download-map.sh` [Protomaps](https://protomaps.com) planet build'inden Türkiye'nin vektör haritasını (yaklaşık 1,7 GB, 15. yakınlaştırma düzeyine kadar) keser ve küçük bir harita sayfası kurar. Yalnızca `build.protomaps.com`, `github.com` ve `cdn.jsdelivr.net` adreslerine gider; dosyaları nginx olduğu gibi sunar, ek sunucu ayarı gerekmez. **http://box.lan/harita/** adresini aç. IIAB haritasının yanında çalışır, onun yerine geçmez. Başka bölge: `sudo MAP_NAME=almanya MAP_BBOX=5.8,47.2,15.1,55.1 ./scripts/download-map.sh` (bbox sırası `batı,güney,doğu,kuzey`). `--update` daha yeni bir planet build'i varsa haritayı yeniden keser. Harita verisi © OpenStreetMap katkıcıları (ODbL).
+
 **7. Kullan.** Oluşturduğun Wi-Fi ağına bağlan ve **http://box.lan/home** adresini aç.
 
 ### İsteğe bağlı: USB Wi-Fi adaptörüyle internet
@@ -225,15 +244,30 @@ Pi'nin dahili Wi-Fi kartı sadece hotspot için kullanılıyor. Pi'nin geçici o
 
 Hemen kontrol: `sudo ./scripts/disk-health.sh`. Bazı USB adaptörlerinin arkasındaki diskler SMART bilgisi vermez; o zaman bu kontrol sessizce atlanır.
 
+### Otomatik güncelleme
+
+`install.sh` bunu kurar (mevcut kurulumda: `sudo ./scripts/install-auto-update.sh`). Pi internete bağlandığında (Ethernet, yukarıdaki USB Wi-Fi adaptörü, telefondan paylaşım) hangi içeriğin ve haritanın yeni sürümü olduğuna bakar. **Kendiliğinden hiçbir şey indirmez:** ana sayfada boyutlarıyla bir liste çıkar; içerikleri seçip `iiab-admin` şifresini (kurulumda belirlenen, `/admin` girişinde de kullanılan şifre) girerek **Seçilenleri güncelle** butonuna basılır.
+
+- Telefondan paylaşım gibi kotalı bir bağlantıdaysa ana sayfa indirmenin mobil veri harcayacağını söyler.
+- Diske sığmayan içerik seçilemez; eski sürüm çalışmaya devam eder.
+- Kontrol en fazla 6 saatte bir yapılır, sürekli bağlı cihazlarda ayrıca günde bir.
+- Hemen kontrol: `sudo ./scripts/auto-update.sh --check --force`. Terminalden güncelleme: `sudo ./scripts/auto-update.sh --apply wikipedia_tr_all_maxi`. Kayıtlar: `journalctl -u has-update-check -u has-update-apply`
+
+**İnternetsiz, USB diskten.** `.zim` dosyalarını orijinal adlarıyla (ör. `wikipedia_tr_all_maxi_2026-09.zim`) bir USB diske, en fazla üç klasör derinliğe kopyala ve Pi'ye tak. Disk salt okunur bağlanır; `config/content.conf`'ta olup kutuda olmayan ya da kutudakinden yeni olan dosyalar aynı listede "(USB'den)" etiketiyle çıkar. Kopyalanan dosya kullanılmadan önce her ZIM dosyasının içinde saklanan MD5 özeti doğrulanır, bozuk kopya asla kurulmaz. Bu özet dosyayı kimin hazırladığını kanıtlamaz; yalnızca güvendiğin bir kaynaktan gelen diski onayla. `/library`'yi tutan SSD, USB ile bağlı olsa bile içerik diski sayılmaz. 4 GB'tan büyük dosyalar için diski exFAT ya da NTFS biçimlendir.
+
 ### Repo yapısı
 
 ```
 install.sh                   ana kurulum betiği
 scripts/setup-ssd.sh         SSD'yi /library klasörüne bağlar
+scripts/download-map.sh      çevrimdışı vektör harita (Protomaps) ve sayfası
 scripts/download-content.sh  Kiwix'ten ZIM dosyalarını indirir/günceller
 scripts/install-homepage.sh  özel ana sayfayı kurar
+scripts/auto-update.sh       güncellemeleri kontrol eder ve uygular
+scripts/install-auto-update.sh  güncelleme servislerini kurar
 scripts/status.sh            sağlık kontrolü: disk, servisler, hotspot, içerik, güç
 scripts/disk-health.sh       disk ve güç sağlığı denetimi (saglik/: systemd zamanlayıcısı)
+update/                      güncelleme servisleri, NetworkManager kancası, USB kuralı, nginx ayarı
 config/iiab-overrides.yml    Internet-in-a-Box ayarları
 config/content.conf          indirilecek içerik listesi
 www/home/index.html          ana sayfa
@@ -251,7 +285,7 @@ SD kart ve SSD'deki boş alanı, web, Kiwix, hotspot ve DHCP servislerini, hotsp
 - **Kurulumdan sonra `ssh kullanici@hostname.local` çalışmıyor.** Internet-in-a-Box cihazın adını `box` yapar. `ssh kullanici@box.local` ya da Pi'nin IP adresini kullan. IP adresini bulmak için bilgisayarında `arp -a` çalıştır ya da modeminin cihaz listesine bak.
 - **Chromium "profile is locked" hatası veriyor.** Bu da cihaz adının değişmesinden kaynaklanır. "Unlock Profile" butonuna tıkla ya da `rm -f ~/.config/chromium/Singleton*` komutunu çalıştır.
 - **Hotspot görünmüyor.** Ethernet ile bağlan, `sudo iiab-diagnostics` komutuyla kontrol et ve kurulumun bittiğinden emin ol: `/etc/iiab/install-flags/iiab-complete` dosyası var olmalı.
-- **Harita indirmesi "connection reset by peer" hatası veriyor.** Harita sunucusu (`contabostorage.com`) Türkiye gibi bazı ülkelerde engelli. Pi'ye Cloudflare WARP kur, bağlan, indirmeyi yönetim panelinden tekrar başlat ve bitince bağlantıyı kapat:
+- **Harita indirmesi "connection reset by peer" hatası veriyor.** Harita sunucusu (`contabostorage.com`) Türkiye gibi bazı ülkelerde engelli. Kolay çıkış yolu `sudo ./scripts/download-map.sh` (adım 6): o sunucuyu kullanmaz. Aksi halde Pi'ye Cloudflare WARP kur, bağlan, indirmeyi yönetim panelinden tekrar başlat ve bitince bağlantıyı kapat:
   ```bash
   curl -fsSL https://pkg.cloudflareclient.com/pubkey.gpg | sudo gpg --yes --dearmor -o /usr/share/keyrings/cloudflare-warp-archive-keyring.gpg
   echo "deb [signed-by=/usr/share/keyrings/cloudflare-warp-archive-keyring.gpg] https://pkg.cloudflareclient.com/ $(. /etc/os-release; echo $VERSION_CODENAME) main" | sudo tee /etc/apt/sources.list.d/cloudflare-client.list

@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Harita :: HAS_PrepperDisk</title>
+<link rel="stylesheet" href="lib/maplibre-gl.css">
+<style>
+  html,body{height:100%;margin:0;font-family:Verdana,Tahoma,Arial,sans-serif;font-size:11px;background:#E5E5E5;color:#000}
+  .bar{height:34px;display:flex;align-items:center;gap:10px;padding:0 8px;background:linear-gradient(#3F7FAD,#006699);color:#fff;white-space:nowrap;overflow:hidden}
+  .bar a{color:#FFA34F;font-weight:bold;text-decoration:none}
+  .bar a:hover{text-decoration:underline}
+  .bar .t{font-weight:bold;font-size:13px}
+  .bar .info{color:#C7D0D7;overflow:hidden;text-overflow:ellipsis}
+  .bar .sp{flex:1}
+  .bar label{color:#fff}
+  .bar select,.bar input,.bar button{font:11px Verdana,sans-serif;padding:1px 4px;border:1px solid #7F9DB9;background:#fff;color:#000}
+  .bar input{width:110px}
+  .bar button{cursor:pointer;background:#FAFAFA}
+  #map{position:absolute;top:34px;bottom:0;left:0;right:0}
+  #msg{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;border:1px solid #98AAB1;
+    padding:14px 18px;max-width:440px;font-size:12px;line-height:1.5;display:none;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+  #msg code{background:#EFEFEF;padding:1px 4px}
+  #coord{position:absolute;left:8px;bottom:8px;background:rgba(255,255,255,.88);padding:2px 6px;font-size:10px;border:1px solid #98AAB1;cursor:pointer}
+  .maplibregl-ctrl-attrib{font-size:10px}
+  @media (max-width:640px){ .hide-s{display:none} }
+</style>
+</head>
+<body>
+<div class="bar">
+  <a href="/home/">&laquo; Ana sayfa</a>
+  <span class="t">Çevrimdışı Harita</span>
+  <span id="info" class="info hide-s"></span>
+  <span class="sp"></span>
+  <form id="gotoform" title="Enlem, boylam (örn. 39.92, 32.85) veya tek satırda GPS değeri">
+    <input id="goto" placeholder="39.92, 32.85" autocomplete="off"><button class="hide-s" type="submit">Git</button>
+  </form>
+  <label class="hide-s">Tema <select id="flavor"><option value="light">Açık</option><option value="dark">Koyu</option><option value="grayscale">Gri</option></select></label>
+  <label class="hide-s">Etiket <select id="lang"><option value="tr">Türkçe</option><option value="en">İngilizce</option></select></label>
+</div>
+<div id="map"></div>
+<div id="coord" title="Tıkla: kopyala"></div>
+<div id="msg"></div>
+
+<script src="lib/maplibre-gl.js"></script>
+<script src="lib/pmtiles.js"></script>
+<script src="lib/basemaps.js"></script>
+<script>
+/* Protomaps PMTiles (/library/www/html/harita/data/, nginx ile doğrudan sunulur) + MapLibre GL + @protomaps/basemaps stili.
+   Her sey bu sunucudan gelir: tile'lar, yazi tipleri (Noto Sans pbf), sprite'lar, kutuphaneler. Internet gerekmez. */
+const DATA = location.origin + "/harita/data/";
+const $ = id => document.getElementById(id);
+const show = html => { const m = $("msg"); m.innerHTML = html; m.style.display = html ? "block" : "none"; };
+const prefs = (() => { try { return JSON.parse(localStorage.getItem("harita") || "{}"); } catch(e){ return {}; } })();
+const save = () => { try { localStorage.setItem("harita", JSON.stringify(prefs)); } catch(e){} };
+
+(async () => {
+  let meta = null;
+  try { const r = await fetch(DATA + "map.json", { cache: "no-store" }); if (r.ok) meta = await r.json(); } catch(e){}
+  if (!meta) {
+    show(`<b>Harita henüz indirilmedi.</b><br>Sunucuda bir kez: <code>sudo ./scripts/download-map.sh</code><br>
+      Türkiye kesiti ~1,7 GB (Protomaps / OpenStreetMap); indirme için internet gerekir, sonrası tamamen çevrimdışı çalışır.`);
+    return;
+  }
+  const url = DATA + meta.name + ".pmtiles";
+  const protocol = new pmtiles.Protocol();
+  maplibregl.addProtocol("pmtiles", protocol.tile);
+  const archive = new pmtiles.PMTiles(url);
+  protocol.add(archive);
+  let h;
+  try { h = await archive.getHeader(); }
+  catch(e) { show(`<b>Harita dosyası okunamadı:</b> ${url}<br>${e}`); return; }
+  const bounds = [[h.minLon, h.minLat], [h.maxLon, h.maxLat]];
+  const build = String(meta.build || "").replace(/(\d{4})(\d{2})(\d{2})/, "$3.$2.$1");
+  $("info").textContent = `${meta.name} · OSM ${build} · zoom ≤ ${h.maxZoom} · ${(meta.bytes/1073741824).toFixed(1)} GB`;
+
+  $("flavor").value = prefs.flavor || "light";
+  $("lang").value = prefs.lang || "tr";
+  const style = () => ({
+    version: 8,
+    glyphs: DATA + "assets/fonts/{fontstack}/{range}.pbf",
+    sprite: DATA + "assets/sprites/v4/" + $("flavor").value,
+    sources: { protomaps: { type: "vector", url: "pmtiles://" + url,
+      attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> · <a href="https://protomaps.com" target="_blank">Protomaps</a>' } },
+    layers: basemaps.layers("protomaps", basemaps.namedFlavor($("flavor").value), { lang: $("lang").value }),
+  });
+
+  const pad = 1.5;
+  const map = new maplibregl.Map({
+    container: "map", style: style(),
+    bounds: prefs.center ? undefined : bounds,
+    center: prefs.center, zoom: prefs.zoom,
+    maxBounds: [[h.minLon - pad, h.minLat - pad], [h.maxLon + pad, h.maxLat + pad]],
+    maxZoom: h.maxZoom + 3, minZoom: 4,
+    attributionControl: { compact: false },
+  });
+  map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), "top-right");
+  map.addControl(new maplibregl.FullscreenControl(), "top-right");
+  // Konum: tarayici yalniz guvenli baglamda (https veya localhost) verir; http://<ip> ile dugme calismaz, gizlenir.
+  if (window.isSecureContext)
+    map.addControl(new maplibregl.GeolocateControl({ positionOptions: { enableHighAccuracy: true }, trackUserLocation: true }), "top-right");
+  map.addControl(new maplibregl.ScaleControl({ maxWidth: 160, unit: "metric" }), "bottom-right");
+
+  const fmt = ll => `${ll.lat.toFixed(5)}, ${ll.lng.toFixed(5)}`;
+  map.on("mousemove", e => { $("coord").textContent = fmt(e.lngLat); });
+  map.on("moveend", () => { prefs.center = map.getCenter().toArray(); prefs.zoom = map.getZoom(); save(); if (!("ontouchstart" in window)) return; $("coord").textContent = fmt(map.getCenter()); });
+  $("coord").onclick = () => { try { navigator.clipboard.writeText($("coord").textContent); } catch(e){} };
+
+  // Isaret: tiklanan yere pin, koordinat kutusunda goster (kagit harita/GPS ile karsilastirmak icin)
+  const marker = new maplibregl.Marker({ color: "#DD6900" });
+  map.on("click", e => { marker.setLngLat(e.lngLat).addTo(map); $("coord").textContent = fmt(e.lngLat); });
+
+  $("gotoform").onsubmit = ev => {
+    ev.preventDefault();
+    const m = $("goto").value.match(/(-?\d+(?:[.,]\d+)?)\s*[,; ]\s*(-?\d+(?:[.,]\d+)?)/);
+    if (!m) { $("goto").select(); return; }
+    const lat = parseFloat(m[1].replace(",", ".")), lng = parseFloat(m[2].replace(",", "."));
+    if (Math.abs(lat) > 90 || Math.abs(lng) > 180) return;
+    marker.setLngLat([lng, lat]).addTo(map);
+    map.flyTo({ center: [lng, lat], zoom: Math.max(map.getZoom(), 13) });
+  };
+  const restyle = () => { prefs.flavor = $("flavor").value; prefs.lang = $("lang").value; save(); map.setStyle(style()); };
+  $("flavor").onchange = restyle; $("lang").onchange = restyle;
+
+  let warned = false;
+  map.on("error", e => {
+    const msg = String(e && e.error && e.error.message || "");
+    if (!warned && /404|glyph|sprite/i.test(msg)) {
+      warned = true;
+      show(`<b>Yazı tipi/simge paketi eksik</b> (${msg.slice(0, 80)}).<br>Sunucuda <code>sudo ./scripts/download-map.sh</code> tekrar çalıştırılınca iner.<br><a href="#" onclick="document.getElementById('msg').style.display='none';return false">Kapat</a>`);
+    }
+  });
+})();
+</script>
+</body>
+</html>

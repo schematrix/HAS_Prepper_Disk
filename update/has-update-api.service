@@ -1,0 +1,28 @@
+[Unit]
+Description=HAS_PrepperDisk: ana sayfadaki güncelleme butonu / homepage update button
+After=network.target local-fs.target
+RequiresMountsFor=/library
+
+[Service]
+Type=simple
+DynamicUser=yes
+RuntimeDirectory=has-update
+ExecStartPre=+/opt/has-update/admin-hash.sh
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/usr/bin/python3 /opt/has-update/update-api.py
+Restart=always
+RestartSec=5
+
+# Sıkılaştırma / hardening
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+
+[Install]
+WantedBy=multi-user.target

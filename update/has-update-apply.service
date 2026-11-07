@@ -1,0 +1,10 @@
+[Unit]
+Description=HAS_PrepperDisk: ana sayfada onaylanan güncellemeleri indir / download updates approved on the homepage
+RequiresMountsFor=/library
+
+[Service]
+Type=oneshot
+ExecStart=@REPO@/scripts/auto-update.sh --apply
+# İndirme sürerken kütüphane akıcı kalsın / keep the library responsive while downloading
+Nice=10
+IOSchedulingClass=idle

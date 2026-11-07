@@ -1,0 +1,11 @@
+#!/bin/sh
+# NetworkManager: internet gelince güncelleme kontrolünü başlat. Kontrol yalnızca bakar, indirmez;
+# 6 saatte birden sık da çalışmaz.
+# NetworkManager: start an update check when internet appears. The check only looks, never downloads,
+# and runs at most every 6 hours.
+case "$2" in
+  up) ;;
+  connectivity-change) [ "$CONNECTIVITY_STATE" = FULL ] || exit 0 ;;
+  *) exit 0 ;;
+esac
+systemctl start --no-block has-update-check.service

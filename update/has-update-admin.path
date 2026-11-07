@@ -1,0 +1,9 @@
+[Unit]
+Description=HAS_PrepperDisk: iiab-admin şifresi değişince güncelleme butonuna bildir / pass a changed iiab-admin password to the update button
+
+[Path]
+PathChanged=/etc/shadow
+Unit=has-update-admin.service
+
+[Install]
+WantedBy=paths.target

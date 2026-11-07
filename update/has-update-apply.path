@@ -1,0 +1,9 @@
+[Unit]
+Description=HAS_PrepperDisk: ana sayfadan gelen güncelleme isteğini bekle / wait for update requests from the homepage
+
+[Path]
+PathExists=/run/has-update/request
+Unit=has-update-apply.service
+
+[Install]
+WantedBy=paths.target

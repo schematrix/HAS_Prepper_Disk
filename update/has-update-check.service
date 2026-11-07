@@ -1,0 +1,8 @@
+[Unit]
+Description=HAS_PrepperDisk: yeni içerik sürümü kontrolü / check for newer content versions
+After=network-online.target local-fs.target
+RequiresMountsFor=/library
+
+[Service]
+Type=oneshot
+ExecStart=@REPO@/scripts/auto-update.sh --check
