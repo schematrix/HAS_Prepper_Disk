@@ -20,6 +20,7 @@
   .navlinks{font-size:11px;font-weight:bold}
   .navlinks a{margin-left:10px}
   .navlinks a::before{content:"» ";color:#999;font-weight:normal}
+  .navlinks a.acil{color:#B00000}
 
   .crumb{font-weight:bold;font-size:12px;margin:8px 2px}
   .small{font-size:10px;color:#444}
@@ -62,9 +63,28 @@
   .legend span{display:flex;align-items:center;gap:6px}
   .legend .fold{margin-top:0;transform:scale(.8)}
 
+  #disk td{color:#B00000;font-weight:bold;font-size:12px}
   .copy{text-align:center;font-size:10px;color:#444;margin:12px 0 4px;line-height:1.6}
 
   @media (max-width:640px){ .hide-s{display:none} .logo{font-size:22px} }
+  /* Telefonda okunur yazı ve parmakla basılabilir bağlantılar / readable text and tappable links on phones */
+  @media (max-width:640px){
+    body{font-size:14px}
+    .wrap{padding:4px}
+    .navlinks{font-size:15px;line-height:2.2}
+    .navlinks a{margin:0 14px 0 0;display:inline-block}
+    .crumb{font-size:14px}
+    .small{font-size:12px}
+    .forumline th{font-size:13px}
+    .forumline td{padding:8px 6px}
+    td.cat{font-size:14px}
+    .fname{font-size:16px}
+    .fdesc{font-size:13px}
+    .fmod{font-size:12px}
+    .search input[type=text],.search select,.btn{font-size:16px;padding:6px}
+    .search input[type=text]{width:100%;box-sizing:border-box;margin:4px 0}
+    .copy{font-size:12px}
+  }
 </style>
 </head>
 <body>
@@ -76,7 +96,7 @@
       <div class="slogan">Çevrimdışı bilgi arşivi &mdash; internet olmasa da açık</div>
     </div>
     <div class="navlinks">
-      <a href="/kiwix/">Kütüphane</a><a href="/maps">Haritalar</a><a href="/home/toplanma.html">Toplanma Alanları</a><a href="/admin">Yönetim</a>
+      <a href="/home/acil.html" class="acil">Acil Durum</a><a href="/kiwix/">Kütüphane</a><a href="/maps">Haritalar</a><a href="/home/toplanma.html">Toplanma Alanları</a><a href="/admin">Yönetim</a>
     </div>
   </div>
 
@@ -91,6 +111,7 @@
 
   <div class="crumb"><a href="/home">HAS_PrepperDisk Ana Sayfa</a></div>
   <div class="small" style="margin:0 2px 6px" id="now"></div>
+  <table class="forumline" id="disk" hidden><tr><th>Disk ve güç uyarısı</th></tr></table>
 
   <div class="scroll">
   <table class="forumline" id="forums">
@@ -131,6 +152,14 @@ const CATS = [
     { name:"Vikipedi (Türkçe)", desc:"Türkçe Vikipedi'nin resimli tam kopyası.", lang:"TR", size:"~9 GB", zim:"wikipedia_tr_all_maxi", search:true },
     { name:"Wikipedia (English)", desc:"Tüm İngilizce Wikipedia, resimleriyle birlikte.", lang:"EN", size:"~120 GB", zim:"wikipedia_en_all_maxi", search:true },
   ]},
+  { title:"Türkçe Kitaplık", items:[
+    { name:"Vikisözlük", desc:"Türkçe sözlük, köken bilgisi ve çeviriler.", lang:"TR", size:"~810 MB", zim:"wiktionary_tr_all", search:true },
+    { name:"Vikikitap", desc:"Açık ders kitapları ve el kitapları.", lang:"TR", size:"~27 MB", zim:"wikibooks_tr_all" },
+    { name:"Vikikaynak", desc:"Telifsiz metinler, kanunlar, klasikler.", lang:"TR", size:"~68 MB", zim:"wikisource_tr_all" },
+    { name:"Vikisöz", desc:"Özlü sözler ve alıntılar.", lang:"TR", size:"~59 MB", zim:"wikiquote_tr_all" },
+    { name:"iFixit (Türkçe)", desc:"Cihaz ve araç tamiri için Türkçe adım adım rehberler.", lang:"TR", size:"~3,6 GB", zim:"ifixit_tr_all", search:true },
+    { name:"PhET Simülasyonları", desc:"Fizik, kimya ve matematik etkileşimli deneyleri.", lang:"TR", size:"~107 MB", zim:"phet_tr_all" },
+  ]},
   { title:"Haritalar ve Navigasyon", items:[
     { name:"Dünya Haritası", desc:"Avrupa ve Orta Doğu sokak seviyesinde, dünyanın geri kalanı şehir seviyesinde.", lang:"—", size:"~40 GB", url:"/maps" },
   ]},
@@ -141,13 +170,14 @@ const CATS = [
     { name:"Düğümler Kitaplığı", desc:"Düğüm çeşitleri ve kullanım alanları.", lang:"EN", size:"~27 MB", zim:"zimgit-knots_en" },
     { name:"Ready.gov", desc:"ABD resmi afet hazırlık rehberleri: deprem, sel, yangın.", lang:"EN", size:"~1,9 GB", zim:"ready.gov_en_all", search:true },
     { name:"Low-tech Magazine", desc:"Elektriksiz ve düşük teknolojili pratik çözümler.", lang:"EN", size:"~670 MB", zim:"solar.lowtechmagazine.com_mul_all" },
+    { name:"Appropedia", desc:"Uygun teknoloji wiki'si: su, güneş enerjisi, tarım, barınak.", lang:"EN", size:"~580 MB", zim:"appropedia_en_all", search:true },
   ]},
   { title:"Sağlık ve İlk Yardım", items:[
     { name:"WikiMed", desc:"Wikipedia'nın tıp maddeleri: hastalıklar, ilaçlar, anatomi.", lang:"EN", size:"~2 GB", zim:"wikipedia_en_medicine_maxi", search:true },
-    { name:"WikEM", desc:"Acil tıp başvuru kaynağı.", lang:"EN", size:"~260 MB", zim:"wikem_en_all_maxi", search:true },
     { name:"MDWiki", desc:"Doktorlar tarafından düzenlenen tıp ansiklopedisi.", lang:"EN", size:"~2 GB", zim:"mdwiki_en_all_maxi", search:true },
+    { name:"MedlinePlus", desc:"ABD Ulusal Tıp Kütüphanesi hasta bilgilendirme sayfaları.", lang:"EN", size:"~1,9 GB", zim:"medlineplus.gov_en_all", search:true },
     { name:"Tıp Kitaplığı", desc:"Temel tıp ve sağlık kitapları.", lang:"EN", size:"~67 MB", zim:"zimgit-medicine_en" },
-    { name:"Askeri Sahra Tıbbı", desc:"Sahada travma ve yaralı bakımı.", lang:"EN", size:"~78 MB", zim:"fas-military-medicine_en" },
+    { name:"Askeri Sahra Tıbbı", desc:"Sahada travma ve yaralı bakımı (FAS).", lang:"EN", size:"~65 MB", zim:"irp.fas.org_en_military-medicine" },
     { name:"NHS İlaç Rehberi", desc:"İlaçların kullanımı, dozları ve yan etkileri.", lang:"EN", size:"~15 MB", zim:"nhs.uk_en_medicines" },
   ]},
   { title:"Tamir ve Beceriler", items:[
@@ -196,7 +226,7 @@ function render(books){
       if (i.zim) {
         if (books === null) { url = "/kiwix/"; status = "Kütüphaneden açın"; }
         else {
-          const b = books.filter(b => b.id.startsWith(i.zim)).sort((a,z) => a.id < z.id ? 1 : -1)[0];
+          const b = books.filter(b => b.id.startsWith(i.zim + "_")).sort((a,z) => a.id < z.id ? 1 : -1)[0];
           if (b) {
             used.add(b.id);
             url = b.href;
@@ -237,9 +267,13 @@ function render(books){
      Bu sayfa internet bağlantısı olmadan çalışır.`;
 }
 
-const d = new Date();
-document.getElementById("now").textContent =
-  "Sunucu saati: " + d.toLocaleDateString("tr-TR") + " " + d.toLocaleTimeString("tr-TR",{hour:"2-digit",minute:"2-digit"});
+/* Saat, telefonun değil Pi'nin saatidir: HTTP yanıtının Date başlığından okunur. */
+fetch(location.href, {method:"HEAD", cache:"no-store"}).then(r => {
+  const d = new Date(r.headers.get("Date"));
+  if (isNaN(d)) return;
+  document.getElementById("now").textContent =
+    "Sunucu saati: " + d.toLocaleDateString("tr-TR") + " " + d.toLocaleTimeString("tr-TR",{hour:"2-digit",minute:"2-digit"});
+}).catch(() => {});
 
 document.getElementById("search").addEventListener("submit", e => {
   e.preventDefault();
@@ -250,6 +284,13 @@ document.getElementById("search").addEventListener("submit", e => {
     ? `/kiwix/search?books.name=${encodeURIComponent(book)}&pattern=${encodeURIComponent(q)}`
     : `/kiwix/search?pattern=${encodeURIComponent(q)}`;
 });
+
+fetch("/home/disk.json", {cache:"no-store"}).then(r => r.ok ? r.json() : null).then(d => {
+  if (!d || !d.warnings || !d.warnings.length) return;
+  const box = document.getElementById("disk");
+  for (const w of d.warnings) box.insertRow().insertCell().textContent = w;
+  box.hidden = false;
+}).catch(() => {});
 
 loadBooks().then(render);
 </script>
