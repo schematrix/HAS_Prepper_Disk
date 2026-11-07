@@ -61,6 +61,14 @@ sudo ./scripts/download-content.sh
 
 **7. Use it.** Join the Wi-Fi network you created and open **http://box.lan/home**.
 
+### Take it with you: phone downloads
+
+The Wi-Fi reaches only a few dozen metres. **http://box.lan/home/telefon.html** ("Telefona İndir" on the homepage) lets people install the Kiwix Android app from the box and download the ZIM files on it, so they can keep reading after they leave. The ZIM files are served straight from `/library/zims/content` (no copies, no extra space), Turkish content first, each download limited to 2 MB/s so one phone can't choke the hotspot. Fetch the app once while the Pi has internet:
+```bash
+sudo ./scripts/download-app.sh
+```
+It fetches two builds from Kiwix's GitHub releases, about 70 MB for current phones and 64 MB for older ones, each checked against the SHA-256 GitHub publishes; re-run it later to get a newer version. iPhones can't install the app from the box, since Apple only allows the App Store; the page links to Kiwix on the App Store for phones with mobile data, and the downloaded files open in Kiwix once it is installed.
+
 ### Optional: internet over a USB Wi-Fi adapter
 
 The Pi's built-in Wi-Fi is dedicated to the hotspot. If the Pi needs internet temporarily (updates, new content) and there is no Ethernet cable, add a cheap USB Wi-Fi adapter as a second card. Adapters with the MediaTek MT7601U chip work out of the box.
@@ -94,12 +102,16 @@ install.sh                 main installer
 scripts/setup-ssd.sh       mounts the SSD at /library
 scripts/download-content.sh  downloads/updates ZIM files from Kiwix
 scripts/install-homepage.sh  installs the custom homepage
+scripts/install-telefon.sh   sets up phone downloads
+scripts/download-app.sh      downloads the Kiwix Android app for phones
 scripts/status.sh          health check: disk, services, hotspot, content, power
 scripts/disk-health.sh     disk and power health check (saglik/: its systemd timer)
 config/iiab-overrides.yml  Internet-in-a-Box settings
 config/content.conf        list of content to download
 www/home/index.html        homepage
 www/home/acil.html         emergency page (Turkish, sourced from AFAD and EPA)
+www/home/telefon.html      phone downloads page
+telefon/                   nginx config for phone downloads
 ```
 
 ### Troubleshooting
@@ -199,6 +211,14 @@ sudo ./scripts/download-content.sh
 
 **7. Kullan.** Oluşturduğun Wi-Fi ağına bağlan ve **http://box.lan/home** adresini aç.
 
+### Bilgiyi yanında götür: telefona indirme
+
+Wi-Fi yalnızca birkaç on metre çeker. **http://box.lan/home/telefon.html** (ana sayfada "Telefona İndir") sayfasından insanlar Kiwix'in Android uygulamasını kutudan kurar ve kutudaki ZIM dosyalarını indirir; kutudan uzaklaşınca da okumaya devam eder. ZIM dosyaları doğrudan `/library/zims/content` klasöründen sunulur (kopya yok, ek yer tutmaz), Türkçe içerikler en üstte, her indirme 2 MB/sn ile sınırlı ki tek bir telefon hotspot'u tıkamasın. Uygulamayı Pi internete bağlıyken bir kez indir:
+```bash
+sudo ./scripts/download-app.sh
+```
+Kiwix'in GitHub sürümlerinden iki paket indirir, güncel telefonlar için yaklaşık 70 MB, eskiler için 64 MB; her biri GitHub'ın yayımladığı SHA-256 ile doğrulanır. Yeni sürüm için betiği tekrar çalıştır. Apple yalnızca App Store'dan kuruluma izin verdiği için iPhone'a uygulama kutudan kurulamaz; sayfa, mobil verisi olan telefonlar için App Store'daki Kiwix'e bağlantı verir, indirilen dosyalar Kiwix kurulunca açılır.
+
 ### İsteğe bağlı: USB Wi-Fi adaptörüyle internet
 
 Pi'nin dahili Wi-Fi kartı sadece hotspot için kullanılıyor. Pi'nin geçici olarak internete çıkması gerekirse (güncelleme, yeni içerik) ve Ethernet kablosu yoksa ikinci kart olarak ucuz bir USB Wi-Fi adaptörü tak. MediaTek MT7601U yongalı adaptörler kurulumsuz çalışıyor.
@@ -232,12 +252,16 @@ install.sh                   ana kurulum betiği
 scripts/setup-ssd.sh         SSD'yi /library klasörüne bağlar
 scripts/download-content.sh  Kiwix'ten ZIM dosyalarını indirir/günceller
 scripts/install-homepage.sh  özel ana sayfayı kurar
+scripts/install-telefon.sh   telefona indirmeyi kurar
+scripts/download-app.sh      telefonlar için Kiwix Android uygulamasını indirir
 scripts/status.sh            sağlık kontrolü: disk, servisler, hotspot, içerik, güç
 scripts/disk-health.sh       disk ve güç sağlığı denetimi (saglik/: systemd zamanlayıcısı)
 config/iiab-overrides.yml    Internet-in-a-Box ayarları
 config/content.conf          indirilecek içerik listesi
 www/home/index.html          ana sayfa
 www/home/acil.html           acil durum sayfası (AFAD ve EPA kaynaklı)
+www/home/telefon.html        telefona indirme sayfası
+telefon/                     telefona indirme için nginx ayarı
 ```
 
 ### Sorun giderme
