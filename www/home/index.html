@@ -68,6 +68,8 @@
   .warn{color:#B00000;font-weight:bold}
   .bar{height:8px;background:#fff;border:1px solid #7F9DB9;margin-top:4px;max-width:400px}
   .bar i{display:block;height:100%;background:linear-gradient(#FFA34F,#DD6900)}
+  /* 16 px altı yazıda iPhone kutuya dokununca sayfayı yakınlaştırır / iPhone zooms into inputs under 16 px */
+  @media (max-width:640px){ #upd-pw{font-size:16px;padding:6px;width:100%;box-sizing:border-box;margin-bottom:6px} }
 
   #disk td{color:#B00000;font-weight:bold;font-size:12px}
   .copy{text-align:center;font-size:10px;color:#444;margin:12px 0 4px;line-height:1.6}
