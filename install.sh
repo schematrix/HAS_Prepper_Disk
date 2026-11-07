@@ -78,6 +78,7 @@ fi
 # -------------------------------------------------------------- 3. ana sayfa
 say "3/3 Ana sayfa ve otomatik güncelleme / homepage and automatic updates"
 "$REPO/scripts/install-homepage.sh"
+"$REPO/scripts/install-disk-health.sh"
 "$REPO/scripts/install-auto-update.sh"
 
 IP=$(hostname -I | awk '{print $1}')

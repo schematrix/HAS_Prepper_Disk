@@ -1,0 +1,9 @@
+[Unit]
+Description=HAS_PrepperDisk: disk ve güç sağlığı 6 saatte bir / disk and power health every 6 h
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=6h
+
+[Install]
+WantedBy=timers.target

@@ -20,6 +20,7 @@
   .navlinks{font-size:11px;font-weight:bold}
   .navlinks a{margin-left:10px}
   .navlinks a::before{content:"» ";color:#999;font-weight:normal}
+  .navlinks a.acil{color:#B00000}
 
   .crumb{font-weight:bold;font-size:12px;margin:8px 2px}
   .small{font-size:10px;color:#444}
@@ -68,9 +69,28 @@
   .bar{height:8px;background:#fff;border:1px solid #7F9DB9;margin-top:4px;max-width:400px}
   .bar i{display:block;height:100%;background:linear-gradient(#FFA34F,#DD6900)}
 
+  #disk td{color:#B00000;font-weight:bold;font-size:12px}
   .copy{text-align:center;font-size:10px;color:#444;margin:12px 0 4px;line-height:1.6}
 
   @media (max-width:640px){ .hide-s{display:none} .logo{font-size:22px} }
+  /* Telefonda okunur yazı ve parmakla basılabilir bağlantılar / readable text and tappable links on phones */
+  @media (max-width:640px){
+    body{font-size:14px}
+    .wrap{padding:4px}
+    .navlinks{font-size:15px;line-height:2.2}
+    .navlinks a{margin:0 14px 0 0}
+    .crumb{font-size:14px}
+    .small{font-size:12px}
+    .forumline th{font-size:13px}
+    .forumline td{padding:8px 6px}
+    td.cat{font-size:14px}
+    .fname{font-size:16px}
+    .fdesc{font-size:13px}
+    .fmod{font-size:12px}
+    .search input[type=text],.search select,.btn{font-size:16px;padding:6px}
+    .search input[type=text]{width:100%;box-sizing:border-box;margin:4px 0}
+    .copy{font-size:12px}
+  }
 </style>
 </head>
 <body>
@@ -82,7 +102,7 @@
       <div class="slogan">Çevrimdışı bilgi arşivi &mdash; internet olmasa da açık</div>
     </div>
     <div class="navlinks">
-      <a href="/kiwix/">Kütüphane</a><a href="/maps">Haritalar</a><a href="/admin">Yönetim</a>
+      <a href="/home/acil.html" class="acil">Acil Durum</a><a href="/kiwix/">Kütüphane</a><a href="/maps">Haritalar</a><a href="/admin">Yönetim</a>
     </div>
   </div>
 
@@ -97,6 +117,7 @@
 
   <div class="crumb"><a href="/home">HAS_PrepperDisk Ana Sayfa</a></div>
   <div class="small" style="margin:0 2px 6px" id="now"></div>
+  <table class="forumline" id="disk" hidden><tr><th>Disk ve güç uyarısı</th></tr></table>
 
   <div class="scroll"><table class="forumline" id="upd" hidden></table></div>
 
@@ -255,9 +276,13 @@ function render(books){
      Bu sayfa internet bağlantısı olmadan çalışır.`;
 }
 
-const d = new Date();
-document.getElementById("now").textContent =
-  "Sunucu saati: " + d.toLocaleDateString("tr-TR") + " " + d.toLocaleTimeString("tr-TR",{hour:"2-digit",minute:"2-digit"});
+/* Saat, telefonun değil Pi'nin saatidir: HTTP yanıtının Date başlığından okunur. */
+fetch(location.href, {method:"HEAD", cache:"no-store"}).then(r => {
+  const d = new Date(r.headers.get("Date"));
+  if (isNaN(d)) return;
+  document.getElementById("now").textContent =
+    "Sunucu saati: " + d.toLocaleDateString("tr-TR") + " " + d.toLocaleTimeString("tr-TR",{hour:"2-digit",minute:"2-digit"});
+}).catch(() => {});
 
 document.getElementById("search").addEventListener("submit", e => {
   e.preventDefault();
@@ -268,6 +293,13 @@ document.getElementById("search").addEventListener("submit", e => {
     ? `/kiwix/search?books.name=${encodeURIComponent(book)}&pattern=${encodeURIComponent(q)}`
     : `/kiwix/search?pattern=${encodeURIComponent(q)}`;
 });
+
+fetch("/home/disk.json", {cache:"no-store"}).then(r => r.ok ? r.json() : null).then(d => {
+  if (!d || !d.warnings || !d.warnings.length) return;
+  const box = document.getElementById("disk");
+  for (const w of d.warnings) box.insertRow().insertCell().textContent = w;
+  box.hidden = false;
+}).catch(() => {});
 
 /* Güncellemeler. scripts/auto-update.sh --check yeni sürümleri updates.json'a yazar; butona basınca
    seçilenler /guncelleme/ adresine gider, indirme update-status.json'dan izlenir. */
