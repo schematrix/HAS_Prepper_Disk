@@ -46,6 +46,10 @@ if len(kept) == len(lines):
     sys.exit(1)
 with open(sys.argv[1] + ".tmp", "w", encoding="utf-8") as f:
     f.writelines(kept)
+# Servis yetkisiz kullanıcıyla çalışır; dosyanın sahibi root olursa pano yazamaz / keep the service user as owner
+st = os.stat(sys.argv[1])
+os.chown(sys.argv[1] + ".tmp", st.st_uid, st.st_gid)
+os.chmod(sys.argv[1] + ".tmp", st.st_mode)
 os.replace(sys.argv[1] + ".tmp", sys.argv[1])' "$DATA" "$2" || rc=$?
     [ "$active" = active ] && systemctl start has-pano-api
     [ "$rc" -eq 0 ] || die "$2 numaralı kayıt yok / no such entry"

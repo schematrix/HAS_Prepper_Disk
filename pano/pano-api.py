@@ -158,7 +158,10 @@ class Handler(BaseHTTPRequestHandler):
             added[self.ip()].append(time.time())
             e.update(id=secrets.token_hex(6), durum=data["durum"], zaman=datetime.now().astimezone().isoformat(timespec="seconds"),
                      kod=hashlib.sha256(kod.encode()).hexdigest(), ara=" " + norm(" ".join((e["ad"], e["yer"], e["mesaj"]))))
-            append(e)
+            try:
+                append(e)
+            except OSError as err:
+                return self.write_failed(err)
             entries.append(e)
         self._send(201, {"id": e["id"], "kod": kod})
 
@@ -175,9 +178,18 @@ class Handler(BaseHTTPRequestHandler):
             if not match:
                 fails[self.ip()].append(time.time())
                 return self._send(403, {"error": "Kod yanlış / wrong code"})
+            try:
+                save([e for e in entries if e is not match[0]])
+            except OSError as err:
+                return self.write_failed(err)
             entries.remove(match[0])
-            save(entries)
         self._send(200, {"ok": True})
+
+    def write_failed(self, err):
+        # Sayfa bunu "pano kapalı"dan ayırsın, kutu sahibi de günlükte görsün.
+        # Tell the page this apart from "board closed", and leave it in the journal for the box owner.
+        print(f"yazılamadı / write failed: {err}", file=sys.stderr, flush=True)
+        self._send(500, {"error": "Kayıt diske yazılamadı, kutu sahibine haber verin / could not write to disk, tell the box owner"})
 
     def ip(self):
         return self.headers.get("X-Real-IP") or self.client_address[0]

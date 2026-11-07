@@ -104,8 +104,9 @@ $("yaz").addEventListener("submit", async ev => {
   const m = $("sonuc");
   m.style.display = "block";
   try {
-    const r = await post("/pano/kayitlar", body), d = await r.json();
-    if (!r.ok) { m.innerHTML = `<span class="warn">${esc(d.error || "Kaydedilemedi.")}</span>`; return; }
+    /* Servis kapalıyken nginx JSON olmayan bir hata sayfası döner. */
+    const r = await post("/pano/kayitlar", body), d = await r.json().catch(() => ({}));
+    if (!r.ok) { m.innerHTML = `<span class="warn">${esc(d.error || "Pano şu anda kapalı ya da çalışmıyor.")}</span>`; return; }
     m.innerHTML = `Kaydın eklendi. Silme kodun: <b class="kod">${esc(d.kod)}</b><br>Bu kodu not al; kaydını sonra silmek istersen gerekir.`;
     $("yaz").reset();
     $("q").value = "";
