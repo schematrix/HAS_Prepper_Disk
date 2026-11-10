@@ -52,6 +52,14 @@ while read -r folder prefix _; do
   if [ -z "$url" ]; then echo "!! $prefix bulunamadı / not found in the Kiwix catalog (ad değişmiş veya kaldırılmış olabilir / name may have changed or been retired)"; failed=1; continue; fi
   latest=$(basename "$url")
 
+  # Eski sürümlerin yarım indirmelerini sil: yeni sürüm çıkınca bunlara devam edilmez, ama yer
+  # kaplar ve aşağıdaki yer kontrolünde dolu sayılır.
+  # Remove unfinished downloads of older versions: they are never resumed once a newer version is
+  # out, but they take up space and count as used in the free-space check below.
+  for part in "$DEST/${prefix}"_[0-9][0-9][0-9][0-9]-[0-9][0-9]*.zim.part; do
+    [ "$part" != "$DEST/$latest.part" ] && [ -f "$part" ] && { echo "-- eski yarım indirme siliniyor / removing stale partial download $part"; rm -f "$part"; }
+  done
+
   if [ -f "$DEST/$latest" ]; then echo "== $latest zaten var / already present"; continue; fi
 
   # Yer kontrolü / free-space check: kalan boyut + pay / remaining bytes + headroom
