@@ -29,6 +29,8 @@ mountpoint -q /library || echo "Uyarı / warning: /library ayrı bir disk değil
 echo ">> Kiwix kataloğu alınıyor / fetching Kiwix catalog"
 if ! curl -fsSL -m 300 "$CATALOG_URL" -o "$CAT"; then
   echo "!! Katalog alınamadı, klasör listesine düşülüyor / catalog unreachable, falling back to directory listings"
+  # CAT boşalınca EXIT trap'i dosyayı silemez, önce sil / once CAT is cleared the EXIT trap can't remove the file
+  rm -f "$CAT"
   CAT=""
 fi
 
