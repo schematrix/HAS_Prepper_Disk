@@ -109,6 +109,32 @@ Every 6 hours (and 5 minutes after boot) `scripts/disk-health.sh` checks the `/l
 
 Check now: `sudo ./scripts/disk-health.sh`. Disks behind some USB adapters don't report SMART; those checks are then skipped silently.
 
+### Heartbeat (optional)
+
+When the box connects to the internet, it sends a “I’m alive” signal to a service of your choice. If the signals stop arriving for a certain period, that service sends an alert, allowing you to remotely detect that the box has gone down.
+
+```bash
+sudo ./scripts/install-heartbeat.sh
+```
+
+When the script is run again, the existing settings become the default answers to the prompts. Press Enter to keep the current value. Settings are stored in `/etc/has-heartbeat.conf`. You can manually edit `url`, `format`, `method`, `headers`, `query`, `body`, `warnings`, `metrics`, and `box_id` (changes take effect with the next heartbeat). To change `interval`, you must run the script again.
+To disable the feature, run the script again and enter `off` when prompted for the URL.
+To test: `sudo ./scripts/heartbeat.sh`
+Logs: `journalctl -u has-heartbeat.service`
+
+For a custom API, configure `method`, `headers`, and a `query` or `body` template in `/etc/has-heartbeat.conf`.
+The following variables are replaced with escaped values:
+`{status}` (up/down), `{msg}`, `{box}`, `{uptime}`, `{disk}` (%), `{cpu}` (°C)
+
+```bash
+url="https://monitor.example.com/api/box"
+method="POST"
+headers=("Authorization: Bearer token")
+body='{"status":"{status}","message":"{msg}"}'
+```
+
+`query` builds the part after the `?` of the URL (e.g. `query="durum={status}&mesaj={msg}"`), `body` becomes the request body, and `method` defaults to GET for `params`, POST for `json` and POST when `body` is set. Values in `query` are percent-encoded and values in `body` are JSON-escaped automatically. When `query` or `body` is set, `format` is ignored.
+
 ### Repo layout
 
 ```
@@ -118,8 +144,10 @@ scripts/download-content.sh  downloads/updates ZIM files from Kiwix
 scripts/install-homepage.sh  installs the custom homepage
 scripts/status.sh          health check: disk, services, hotspot, content, power
 scripts/disk-health.sh     disk and power health check (saglik/: its systemd timer)
+scripts/install-heartbeat.sh  (optional) installs the heartbeat
 config/iiab-overrides.yml  Internet-in-a-Box settings
 config/content.conf        list of content to download
+config/heartbeat.conf      heartbeat settings
 www/home/index.html        homepage
 www/home/acil.html         emergency page (Turkish, sourced from AFAD and EPA)
 ```
@@ -161,6 +189,7 @@ It checks free space on the SD card and SSD, the web, Kiwix, hotspot and DHCP se
   `br0` should now be UP with 10.10.10.10 and `wlan0` should show `state forwarding`.
 - **SSH without a cable:** join the Pi's hotspot and use `ssh user@10.10.10.10`.
 - **Restoring the original homepage:** `sudo cp /library/www/html/home/index.html.iiab-original /library/www/html/home/index.html`
+- **No heartbeat signal arrives.** While the box is offline that is normal. When it has internet, test with `sudo ./scripts/heartbeat.sh` and check `journalctl -u has-heartbeat.service -n 20`. If `/etc/has-heartbeat.conf` has an empty `url`, the heartbeat is disabled; re-run `sudo ./scripts/install-heartbeat.sh`.
 
 ### License
 
@@ -247,6 +276,27 @@ Pi'nin dahili Wi-Fi kartı sadece hotspot için kullanılıyor. Pi'nin geçici o
 
 Hemen kontrol: `sudo ./scripts/disk-health.sh`. Bazı USB adaptörlerinin arkasındaki diskler SMART bilgisi vermez; o zaman bu kontrol sessizce atlanır.
 
+### Heartbeat (isteğe bağlı)
+
+Kutu internete çıktığında seçtiğin bir servise "çalışıyorum" sinyali yollar. Sinyaller belirli süre gelmezse o servis uyarır ve kutunun düştüğünü uzaktan öğrenirsin.
+
+```bash
+sudo ./scripts/install-heartbeat.sh
+```
+
+Betik tekrar çalıştırıldığında mevcut ayarlar soruların varsayılanı olur; değeri korumak için Enter'a bas. Ayarlar `/etc/has-heartbeat.conf` dosyasında durur. `url`, `format`, `method`, `headers`, `query`, `body`, `warnings`, `metrics` ve `box_id` elle düzenlenebilir (bir sonraki sinyalde geçerli olur), `interval`'ı değiştirmek için betiği tekrar çalıştırmak gerekir. Özelliği kapatmak için betiği tekrar çalıştır ve URL sorusuna `off` yaz.
+Test: `sudo ./scripts/heartbeat.sh`.
+Loglar: `journalctl -u has-heartbeat.service`.
+
+Özel bir API için `/etc/has-heartbeat.conf` dosyasında `method`, `headers` ve bir `query` ya da `body` şablonu belirle. `{status}` (up/down), `{msg}`, `{box}`, `{uptime}`, `{disk}` (%) ve `{cpu}` (°C) değişkenleri escaped değerlerle değiştirilir:
+
+```bash
+url="https://monitor.example.com/api/box"
+method="POST"
+headers=("Authorization: Bearer token")
+body='{"durum":"{status}","mesaj":"{msg}"}'
+```
+
 ### Repo yapısı
 
 ```
@@ -256,8 +306,10 @@ scripts/download-content.sh  Kiwix'ten ZIM dosyalarını indirir/günceller
 scripts/install-homepage.sh  özel ana sayfayı kurar
 scripts/status.sh            sağlık kontrolü: disk, servisler, hotspot, içerik, güç
 scripts/disk-health.sh       disk ve güç sağlığı denetimi (saglik/: systemd zamanlayıcısı)
+scripts/install-heartbeat.sh (isteğe bağlı) heartbeat kurar
 config/iiab-overrides.yml    Internet-in-a-Box ayarları
 config/content.conf          indirilecek içerik listesi
+config/heartbeat.conf        heartbeat ayarları
 www/home/index.html          ana sayfa
 www/home/acil.html           acil durum sayfası (AFAD ve EPA kaynaklı)
 ```
@@ -299,6 +351,7 @@ SD kart ve SSD'deki boş alanı, web, Kiwix, hotspot ve DHCP servislerini, hotsp
   Artık `br0` 10.10.10.10 adresiyle UP, `wlan0` da `state forwarding` görünmeli.
 - **Kablosuz SSH:** Pi'nin hotspot'una bağlan ve `ssh kullanici@10.10.10.10` kullan.
 - **Orijinal ana sayfaya dönmek için:** `sudo cp /library/www/html/home/index.html.iiab-original /library/www/html/home/index.html`
+- **Heartbeat sinyali gitmiyor.** Kutu internetsizken bu normaldir. İnterneti olduğunda `sudo ./scripts/heartbeat.sh` ile test et ve `journalctl -u has-heartbeat.service -n 20` kaydına bak. `/etc/has-heartbeat.conf` içinde `url` boşsa nabız kapalıdır; `sudo ./scripts/install-heartbeat.sh`'ı tekrar çalıştır.
 
 ### Lisans
 
