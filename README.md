@@ -83,6 +83,17 @@ sudo ./scripts/download-content.sh
 
 **7. Use it.** Join the Wi-Fi network you created and open **http://box.lan/home**.
 
+### Turkish survival guide
+
+Most of the medical and survival content on the box is in English, and Kiwix has no Turkish medical or survival ZIM. So the homepage ships a small Turkish guide at **http://box.lan/home/rehber/** (about 110 KB, no download needed):
+
+- first aid, water and food, shelter/heating/fire, other disasters (flood, tsunami, wildfire, chemical, etc.), hygiene and psychological first aid, navigation and signalling,
+- a Turkish-English glossary of 350+ terms. The homepage search uses it: pick an English book, type in Turkish ("yanık"), and it searches in English ("burn"),
+- "read more" links that open the matching article in the Turkish Wikipedia or the English books on the box,
+- a short how-to for setting up offline translation on Android and iPhone in advance.
+
+The text is written from scratch (no copied text) based on public guidance from ERC 2021, IFRC 2020, WHO, Sphere, AFAD, CDC, EPA, FEMA and USDA, with the source under each section. **It has not yet been reviewed by a health professional**; each page says so.
+
 ### Optional: internet over a USB Wi-Fi adapter
 
 The Pi's built-in Wi-Fi is dedicated to the hotspot. If the Pi needs internet temporarily (updates, new content) and there is no Ethernet cable, add a cheap USB Wi-Fi adapter as a second card. Adapters with the MediaTek MT7601U chip work out of the box.
@@ -122,6 +133,7 @@ config/iiab-overrides.yml  Internet-in-a-Box settings
 config/content.conf        list of content to download
 www/home/index.html        homepage
 www/home/acil.html         emergency page (Turkish, sourced from AFAD and EPA)
+www/home/rehber/           Turkish survival guide and Turkish-English glossary
 ```
 
 ### Troubleshooting
@@ -221,6 +233,17 @@ sudo ./scripts/download-content.sh
 
 **7. Kullan.** Oluşturduğun Wi-Fi ağına bağlan ve **http://box.lan/home** adresini aç.
 
+### Türkçe hayatta kalma rehberi
+
+Kutudaki tıp ve hayatta kalma içeriğinin çoğu İngilizce ve Kiwix'te Türkçe tıp ya da hayatta kalma ZIM'i yok. Bu yüzden ana sayfayla birlikte **http://box.lan/home/rehber/** adresinde küçük bir Türkçe rehber gelir (yaklaşık 110 KB, ayrıca indirme gerekmez):
+
+- ilk yardım, su ve gıda, barınma/ısınma/yangın, diğer afetler (sel, tsunami, orman yangını, kimyasal sızıntı vb.), hijyen ve psikolojik ilk yardım, yön bulma ve işaretleşme,
+- 350'den fazla terimlik Türkçe-İngilizce sözlük. Ana sayfadaki arama bunu kullanır: İngilizce bir kitap seçip Türkçe yazarsan ("yanık") İngilizcesiyle ("burn") arar,
+- ilgili konuyu kutudaki Türkçe Vikipedi'de ya da İngilizce kitaplarda açan "daha fazla oku" bağlantıları,
+- Android ve iPhone'da çevrimdışı çevirinin önceden nasıl kurulacağını anlatan kısa bir bölüm.
+
+Metinler hiçbir yerden kopyalanmadan; ERC 2021, IFRC 2020, DSÖ, Sphere, AFAD, CDC, EPA, FEMA ve USDA'nın herkese açık önerilerine dayanarak özgün olarak yazıldı, her bölümün altında kaynağı var. **Henüz bir sağlık profesyoneli tarafından kontrol edilmedi**; her sayfada bu yazıyor.
+
 ### İsteğe bağlı: USB Wi-Fi adaptörüyle internet
 
 Pi'nin dahili Wi-Fi kartı sadece hotspot için kullanılıyor. Pi'nin geçici olarak internete çıkması gerekirse (güncelleme, yeni içerik) ve Ethernet kablosu yoksa ikinci kart olarak ucuz bir USB Wi-Fi adaptörü tak. MediaTek MT7601U yongalı adaptörler kurulumsuz çalışıyor.
@@ -260,6 +283,7 @@ config/iiab-overrides.yml    Internet-in-a-Box ayarları
 config/content.conf          indirilecek içerik listesi
 www/home/index.html          ana sayfa
 www/home/acil.html           acil durum sayfası (AFAD ve EPA kaynaklı)
+www/home/rehber/             Türkçe hayatta kalma rehberi ve Türkçe-İngilizce sözlük
 ```
 
 ### Sorun giderme

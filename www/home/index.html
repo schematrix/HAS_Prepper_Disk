@@ -64,6 +64,11 @@
   .legend .fold{margin-top:0;transform:scale(.8)}
 
   #disk td{color:#B00000;font-weight:bold;font-size:12px}
+  /* İngilizce kaynak etiketi ve Türkçe→İngilizce arama ipucu / English badge and search hint */
+  .en{display:inline-block;font-size:9px;font-weight:bold;color:#fff;background:#7F8C99;border-radius:2px;padding:0 3px;margin-left:5px;vertical-align:1px}
+  #ceviri{margin-top:4px;color:#444}
+  #ceviri:empty{display:none}
+  #ceviri a{font-weight:bold;cursor:pointer}
   .copy{text-align:center;font-size:10px;color:#444;margin:12px 0 4px;line-height:1.6}
 
   @media (max-width:640px){ .hide-s{display:none} .logo{font-size:22px} }
@@ -84,6 +89,7 @@
     .search input[type=text],.search select,.btn{font-size:16px;padding:6px}
     .search input[type=text]{width:100%;box-sizing:border-box;margin:4px 0}
     .copy{font-size:12px}
+    .en{font-size:11px}
   }
 </style>
 </head>
@@ -96,7 +102,7 @@
       <div class="slogan">Çevrimdışı bilgi arşivi &mdash; internet olmasa da açık</div>
     </div>
     <div class="navlinks">
-      <a href="/home/acil.html" class="acil">Acil Durum</a><a href="/kiwix/">Kütüphane</a><a href="/maps">Haritalar</a><a href="/admin">Yönetim</a>
+      <a href="/home/acil.html" class="acil">Acil Durum</a><a href="/home/rehber/">Türkçe Rehber</a><a href="/kiwix/">Kütüphane</a><a href="/maps">Haritalar</a><a href="/admin">Yönetim</a>
     </div>
   </div>
 
@@ -107,6 +113,7 @@
       <select id="book"></select>
       <input type="submit" class="btn" value="Git">
     </form>
+    <div id="ceviri" class="small"></div>
   </td></tr></table>
 
   <div class="crumb"><a href="/home">HAS_PrepperDisk Ana Sayfa</a></div>
@@ -148,6 +155,15 @@
    url: zim olmayan servisler için sabit adres.
    Cihazda bulunamayan ZIM'ler gri klasörle "henüz yüklenmedi" görünür. */
 const CATS = [
+  { title:"Türkçe Hayatta Kalma Rehberi", items:[
+    { name:"İlk Yardım", desc:"Kalp masajı, kanama ve turnike, ezilme sendromu, kırık, yanık, donma, zehirlenme.", lang:"TR", size:"—", url:"/home/rehber/ilk-yardim.html" },
+    { name:"Su ve Gıda", desc:"Su bulma ve arıtma, elektrik kesintisinde yiyecekler, bebek beslenmesi.", lang:"TR", size:"—", url:"/home/rehber/su-ve-gida.html" },
+    { name:"Barınma, Isınma ve Yangın", desc:"Çadır, sıcak kalmak, karbonmonoksit, ateş yakma ve yangın söndürme.", lang:"TR", size:"—", url:"/home/rehber/barinma.html" },
+    { name:"Afetler", desc:"Sel, tsunami, orman yangını, heyelan, fırtına, kar, kimyasal sızıntı, tahliye.", lang:"TR", size:"—", url:"/home/rehber/afetler.html" },
+    { name:"Hijyen, Salgın ve Moral", desc:"Acil tuvalet, el yıkama, salgın belirtileri, psikolojik ilk yardım, çocuklar.", lang:"TR", size:"—", url:"/home/rehber/hijyen.html" },
+    { name:"Yön Bulma ve İşaretleşme", desc:"Yardım işaretleri, pusulasız yön bulma, radyo, telsiz ve telefon.", lang:"TR", size:"—", url:"/home/rehber/yon-ve-isaret.html" },
+    { name:"Türkçe-İngilizce Sözlük", desc:"İngilizce kitaplarda aramak için tıp ve hayatta kalma terimleri.", lang:"TR", size:"—", url:"/home/rehber/sozluk.html" },
+  ]},
   { title:"Ansiklopedi", items:[
     { name:"Vikipedi (Türkçe)", desc:"Türkçe Vikipedi'nin resimli tam kopyası.", lang:"TR", size:"~9 GB", zim:"wikipedia_tr_all_maxi", search:true },
     { name:"Wikipedia (English)", desc:"Tüm İngilizce Wikipedia, resimleriyle birlikte.", lang:"EN", size:"~120 GB", zim:"wikipedia_en_all_maxi", search:true },
@@ -232,13 +248,18 @@ function render(books){
             url = b.href;
             const v = b.id.match(/(\d{4})-(\d{2})[a-z]?$/);
             status = v ? `${v[2]}/${v[1]} sürümü` : "Kurulu";
-            if (i.search) sel.add(new Option(i.name, b.id));
+            if (i.search) {
+              const o = new Option(i.name + (i.lang === "EN" ? " (İngilizce)" : ""), b.id);
+              o.dataset.lang = i.lang;
+              sel.add(o);
+            }
           }
         }
       }
       if (url) ready++;
       const icon = !url ? "fold gray" : "fold";
-      const name = url ? `<a href="${esc(url)}" class="fname">${esc(i.name)}</a>` : `<span class="fname">${esc(i.name)}</span>`;
+      const en = i.lang === "EN" ? `<span class="en" title="İngilizce kaynak">İNGİLİZCE</span>` : "";
+      const name = (url ? `<a href="${esc(url)}" class="fname">${esc(i.name)}</a>` : `<span class="fname">${esc(i.name)}</span>`) + en;
       html += `<tr class="${url ? "" : "off"}">
         <td class="row1 c" width="40"><i class="${icon}"></i></td>
         <td class="row1">${name}<div class="fdesc">${esc(i.desc)}</div></td>
@@ -264,8 +285,40 @@ function render(books){
   if (!sel.options.length) sel.add(new Option("Tüm kütüphane", ""));
   document.getElementById("stats").innerHTML =
     `Toplam <b>${total}</b> kaynak var, bunlardan <b>${ready}</b> tanesi kullanıma hazır.<br>
-     Bu sayfa internet bağlantısı olmadan çalışır.`;
+     Bu sayfa internet bağlantısı olmadan çalışır. İngilizce kaynakları okumak için:
+     <a href="/home/rehber/#ingilizce">Türkçe Rehber &raquo; İngilizce kaynakları nasıl okurum?</a>`;
+  ipucu();
 }
+
+/* Türkçe → İngilizce arama köprüsü. İngilizce bir kitap seçiliyken Türkçe yazılan arama,
+   /home/rehber/sozluk.js sözlüğüyle İngilizceye çevrilip öyle aranır.
+   Turkish → English search bridge: a Turkish query in an English book is searched in English. */
+let secilen = null;   // kullanıcının seçtiği eş anlamlı karşılık / alternative the user picked
+function ceviri(){
+  const sel = document.getElementById("book");
+  const o = sel.options[sel.selectedIndex];
+  const q = document.getElementById("q").value.trim();
+  if (!o || o.dataset.lang !== "EN" || !q || typeof window.sozlukCevir !== "function") return null;
+  return window.sozlukCevir(q);
+}
+function ipucu(){
+  const box = document.getElementById("ceviri");
+  const c = ceviri();
+  if (!c || !c.en) { box.textContent = ""; secilen = null; return; }
+  if (!c.alts.includes(secilen)) secilen = null;
+  const en = secilen || c.en;
+  let h = `Bu kitap İngilizce. <b>“${esc(en)}”</b> olarak aranacak.`;
+  const diger = c.alts.filter(a => a !== en);
+  if (diger.length) h += " Başka anlam: " + diger.map(a => `<a data-alt="${esc(a)}">${esc(a)}</a>`).join(", ");
+  if (c.kalan && c.kalan.length) h += ` <span>(çevrilemeyen: ${esc(c.kalan.join(" "))})</span>`;
+  box.innerHTML = h;
+}
+document.getElementById("ceviri").addEventListener("click", e => {
+  const a = e.target.closest("a[data-alt]");
+  if (a) { secilen = a.dataset.alt; ipucu(); }
+});
+document.getElementById("q").addEventListener("input", () => { secilen = null; ipucu(); });
+document.getElementById("book").addEventListener("change", ipucu);
 
 /* Saat, telefonun değil Pi'nin saatidir: HTTP yanıtının Date başlığından okunur. */
 fetch(location.href, {method:"HEAD", cache:"no-store"}).then(r => {
@@ -277,9 +330,11 @@ fetch(location.href, {method:"HEAD", cache:"no-store"}).then(r => {
 
 document.getElementById("search").addEventListener("submit", e => {
   e.preventDefault();
-  const q = document.getElementById("q").value.trim();
+  let q = document.getElementById("q").value.trim();
   const book = document.getElementById("book").value;
   if (!q) return;
+  const c = ceviri();
+  if (c && c.en) q = secilen || c.en;
   location.href = book
     ? `/kiwix/search?books.name=${encodeURIComponent(book)}&pattern=${encodeURIComponent(q)}`
     : `/kiwix/search?pattern=${encodeURIComponent(q)}`;
@@ -294,5 +349,6 @@ fetch("/home/disk.json", {cache:"no-store"}).then(r => r.ok ? r.json() : null).t
 
 loadBooks().then(render);
 </script>
+<script src="/home/rehber/sozluk.js" defer></script>
 </body>
 </html>

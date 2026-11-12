@@ -13,5 +13,9 @@ if [ -f "$DST/index.html" ] && [ ! -f "$DST/index.html.iiab-original" ]; then
   cp "$DST/index.html" "$DST/index.html.iiab-original"
 fi
 cp "$SRC/index.html" "$SRC/acil.html" "$DST/"
+# Türkçe hayatta kalma rehberi / Turkish survival guide
+mkdir -p "$DST/rehber"
+cp "$SRC"/rehber/* "$DST/rehber/"
 echo "Ana sayfa kuruldu / homepage installed: http://box.lan/home"
+echo "Türkçe rehber / Turkish guide: http://box.lan/home/rehber/"
 echo "Geri almak için / to restore: sudo cp $DST/index.html.iiab-original $DST/index.html"

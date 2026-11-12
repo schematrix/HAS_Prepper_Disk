@@ -1,0 +1,50 @@
+/* HAS_PrepperDisk Türkçe rehber sayfaları: ana sayfa ve acil.html ile aynı görünüm */
+body{margin:0;background:#E5E5E5;color:#000;font-family:Verdana,Tahoma,Arial,sans-serif;font-size:12px}
+a{color:#006699;text-decoration:none}
+a:hover{color:#DD6900;text-decoration:underline}
+.wrap{max-width:980px;margin:0 auto;padding:10px}
+.bodyline{background:#fff;border:1px solid #98AAB1;padding:8px}
+.logo{font-family:"Trebuchet MS",Verdana,sans-serif;font-size:26px;font-weight:bold;color:#006699;letter-spacing:-1px;
+  text-shadow:1px 1px 0 #C7D0D7;padding:4px}
+.logo span{color:#DD6900}
+.crumb{font-weight:bold;font-size:12px;margin:8px 2px}
+table.forumline{width:100%;border-collapse:collapse;border:1px solid #006699;background:#fff;margin-bottom:10px}
+.forumline th{background:linear-gradient(#3F7FAD,#006699);color:#FFA34F;font-size:11px;font-weight:bold;
+  height:24px;padding:0 6px;border:1px solid #fff;text-align:left}
+.forumline td{padding:6px 8px;border:1px solid #fff;vertical-align:top}
+td.cat{background:linear-gradient(#EEF2F5,#C7D0D7);height:22px;font-weight:bold;font-size:13px;letter-spacing:1px}
+td.row1{background:#EFEFEF;line-height:1.6}
+td.row2{background:#DEE3E7;line-height:1.6}
+td.row1 ul,td.row1 ol{margin:0;padding-left:20px}
+td.row1 li{margin-bottom:3px}
+td.src{background:#DEE3E7;font-size:10px;color:#444}
+.alarm td{background:#B00000;color:#fff;font-size:14px;font-weight:bold;text-align:center;padding:10px}
+.uyari td{background:#FFF3D6;border:1px solid #DD6900;font-size:11px;line-height:1.5}
+.toc{margin:0 2px 10px;line-height:1.9}
+.dikkat{color:#B00000;font-weight:bold}
+.more{font-size:11px}
+.more a.ara{margin-right:10px;white-space:nowrap}
+.more a.ara::before{content:"» ";color:#999}
+.more a.ara.yok{color:#888;pointer-events:none}
+.more a.ara.yok::after{content:" (yüklü değil)";font-size:10px}
+.en{display:inline-block;font-size:9px;font-weight:bold;color:#fff;background:#7F8C99;border-radius:2px;padding:0 3px;vertical-align:1px}
+.copy{text-align:center;font-size:10px;color:#444;margin:12px 0 4px;line-height:1.6}
+kbd{font-family:Verdana,sans-serif;font-size:11px;background:#fff;border:1px solid #98AAB1;border-radius:2px;padding:0 3px}
+
+@media (max-width:640px){
+  body{font-size:15px}
+  .wrap{padding:4px}
+  .logo{font-size:22px}
+  .crumb{font-size:14px}
+  .toc{font-size:15px;line-height:2.2}
+  td.cat{font-size:15px}
+  td.src,.more,.uyari td{font-size:12px}
+  .more a.ara{white-space:normal;display:inline-block;margin:2px 10px 2px 0}
+  .copy{font-size:12px}
+}
+@media print{
+  body{background:#fff;font-size:11px}
+  .toc,.crumb,.more,.noprint{display:none}
+  table.forumline{page-break-inside:avoid}
+}
+.small{font-size:10px;color:#444}

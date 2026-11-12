@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HAS_PrepperDisk :: Türkçe-İngilizce Sözlük</title>
+<link rel="stylesheet" href="rehber.css">
+<style>
+  #f{font-family:Verdana,sans-serif;font-size:13px;border:1px solid #7F9DB9;padding:4px;width:260px;max-width:100%;box-sizing:border-box}
+  #liste td{padding:4px 8px}
+  #liste td.en-k{font-family:"Courier New",monospace;font-size:13px}
+  #liste a.ara{font-size:10px;margin-left:6px}
+  @media (max-width:640px){ #f{font-size:16px;width:100%;padding:8px} #liste td.en-k{font-size:15px} }
+</style>
+</head>
+<body>
+<div class="wrap"><div class="bodyline">
+  <div class="logo">HAS_<span>Prepper</span>Disk</div>
+  <div class="crumb"><a href="/home">Ana Sayfa</a> &raquo; <a href="index.html">Türkçe Rehber</a> &raquo; Türkçe-İngilizce Sözlük</div>
+
+  <table class="forumline">
+    <tr><td class="row1">
+      Kutudaki tıp ve hayatta kalma kaynaklarının çoğu İngilizce. Aradığın konunun İngilizcesini burada bul, sonra İngilizce kitapta onu ara.
+      Ana sayfadaki arama kutusu bu sözlüğü kendiliğinden kullanır: İngilizce bir kitap seçip Türkçe yazarsan İngilizcesiyle arar.
+      Daha geniş bir sözlük için <a href="/kiwix/">kütüphanedeki</a> <b>Vikisözlük</b>'e bak.
+      <div style="margin-top:8px"><b>Ara:</b> <input id="f" type="search" placeholder="yanık, burn, kırık..." autofocus></div>
+    </td></tr>
+  </table>
+
+  <div style="overflow-x:auto">
+  <table class="forumline" id="liste">
+    <tr><th>Türkçe</th><th>İngilizce</th><th class="noprint">Bölüm</th></tr>
+  </table>
+  </div>
+
+  <div class="copy">HAS_PrepperDisk &middot; Türkçe Rehber &middot; Bu sözlük özgün olarak hazırlanmıştır; bir terimin karşılığından emin değilsen birden fazla kaynakta ara.</div>
+</div></div>
+<script src="sozluk.js"></script>
+<script>
+(function () {
+  var esc = function (s) { return String(s).replace(/[&<>"]/g, function (c) { return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); };
+  var tbl = document.getElementById("liste");
+  var rows = window.SOZLUK.slice().sort(function (a, b) { return a[0].localeCompare(b[0], "tr"); });
+  var html = "";
+  rows.forEach(function (r) {
+    html += '<tr data-k="' + esc((r[0] + " " + r[1]).toLocaleLowerCase("tr")) + '"><td class="row1"><b>' + esc(r[0]) +
+      '</b></td><td class="row1 en-k">' + esc(r[1]) + '</td><td class="row2 small noprint">' + esc(r[2]) + '</td></tr>';
+  });
+  tbl.insertAdjacentHTML("beforeend", html);
+  var trs = tbl.querySelectorAll("tr[data-k]");
+  document.getElementById("f").addEventListener("input", function () {
+    var q = this.value.toLocaleLowerCase("tr").trim();
+    trs.forEach(function (tr) { tr.hidden = q && tr.getAttribute("data-k").indexOf(q) < 0; });
+  });
+})();
+</script>
+</body>
+</html>
