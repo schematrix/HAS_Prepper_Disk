@@ -2,7 +2,8 @@
 # HAS_PrepperDisk kurulum betiği / installer
 #  1. Internet-in-a-Box ayarlarını hazırlar / prepares Internet-in-a-Box settings
 #  2. Internet-in-a-Box'ı kurar / installs Internet-in-a-Box
-#  3. HAS_PrepperDisk ana sayfasını kurar / installs the HAS_PrepperDisk homepage
+#  3. Ana sayfayı, disk sağlığını ve (isteğe bağlı) heartbeat'i kurar /
+#     installs the homepage, disk health and (optional) heartbeat
 #
 # Kurulum sırasında Pi yeniden başlarsa bu betiği tekrar çalıştır.
 # If the Pi reboots during install, just run this script again.
@@ -75,16 +76,22 @@ else
   [ -f /etc/iiab/install-flags/iiab-complete ] || die "Kurulum bitmedi / install not finished. Tekrar çalıştır / run again: sudo ./install.sh"
 fi
 
-# -------------------------------------------------------------- 3. ana sayfa
-say "3/3 Ana sayfa / homepage"
+# -------------------------------------------------------------- 3. bileşenler
+say "3/3 HAS_PrepperDisk bileşenleri / components"
 "$REPO/scripts/install-homepage.sh"
 "$REPO/scripts/install-disk-health.sh"
+read -rp "Heartbeat kurulsun mu? / install heartbeat? [e/y/N] " HB
+case "$HB" in
+  e|E|y|Y) "$REPO/scripts/install-heartbeat.sh";;
+  *) echo "Atlandı, sonradan kurmak için / skipped, to install later: sudo ./scripts/install-heartbeat.sh";;
+esac
 
 IP=$(hostname -I | awk '{print $1}')
 say "Bitti / done"
 cat <<EOF
 Ana sayfa / homepage:     http://$IP/home   (hotspot üzerinden / via hotspot: http://box.lan/home)
 Yönetim / admin console:  http://$IP/admin  (kullanıcı / user: iiab-admin)
+Heartbeat:                sudo ./scripts/install-heartbeat.sh  (kur veya değiştir / install or change)
 
 Sıradaki adım / next step: içerikleri indir / download content
   sudo ./scripts/download-content.sh

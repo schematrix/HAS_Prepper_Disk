@@ -1,0 +1,6 @@
+[Unit]
+Description=HAS_PrepperDisk: Heartbeat service
+
+[Service]
+Type=oneshot
+ExecStart=@REPO@/scripts/heartbeat.sh

@@ -1,0 +1,9 @@
+[Unit]
+Description=HAS_PrepperDisk: Heartbeat zamanlayıcı (@INTERVAL@'de bir) / heartbeat timer (every @INTERVAL@)
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=@INTERVAL@
+
+[Install]
+WantedBy=timers.target
