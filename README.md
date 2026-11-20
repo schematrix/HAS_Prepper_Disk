@@ -78,6 +78,11 @@ During the install Internet-in-a-Box asks three things of its own: a new passwor
 ```bash
 sudo ./scripts/download-content.sh
 ```
+The script also installs the offline [Herbadex](https://herbadex.com) herbal & herb–drug interaction guide (`config/herbadex.conf`: `maxi` with compact images ~13 MB, or `nopic` without photos ~7 MB). To install or update Herbadex on its own later:
+```bash
+sudo ./scripts/download-herbadex.sh             # uses config/herbadex.conf
+sudo ./scripts/download-herbadex.sh --variant nopic
+```
 
 **6. Maps.** Open `http://<pi-ip>/admin` (user `iiab-admin`), go to the maps section of the **Install Content** menu and choose the regions you want.
 
@@ -115,11 +120,13 @@ Check now: `sudo ./scripts/disk-health.sh`. Disks behind some USB adapters don't
 install.sh                 main installer
 scripts/setup-ssd.sh       mounts the SSD at /library
 scripts/download-content.sh  downloads/updates ZIM files from Kiwix
+scripts/download-herbadex.sh downloads/updates the offline Herbadex guide (/herbadex/)
 scripts/install-homepage.sh  installs the custom homepage
 scripts/status.sh          health check: disk, services, hotspot, content, power
 scripts/disk-health.sh     disk and power health check (saglik/: its systemd timer)
 config/iiab-overrides.yml  Internet-in-a-Box settings
 config/content.conf        list of content to download
+config/herbadex.conf       Herbadex offline variant (maxi / nopic) and manifest URL
 www/home/index.html        homepage
 www/home/acil.html         emergency page (Turkish, sourced from AFAD and EPA)
 ```
@@ -164,7 +171,7 @@ It checks free space on the SD card and SSD, the web, Kiwix, hotspot and DHCP se
 
 ### License
 
-The scripts and homepage in this repo are released under the [MIT License](LICENSE). Internet-in-a-Box, Kiwix and all downloaded content (Wikipedia, OpenStreetMap, etc.) keep their own licenses. This project is not affiliated with Internet-in-a-Box or Kiwix.
+The scripts and homepage in this repo are released under the [MIT License](LICENSE). Internet-in-a-Box, Kiwix and all downloaded content (Wikipedia, OpenStreetMap, Herbadex, etc.) keep their own licenses; Herbadex content is provided under [CC BY-NC-ND 4.0](https://creativecommons.org/licenses/by-nc-nd/4.0/) strictly for personal, non-commercial offline use. This project is not affiliated with Internet-in-a-Box or Kiwix.
 
 ---
 
@@ -216,6 +223,11 @@ Kurulum sırasında Internet-in-a-Box kendisi üç şey sorar: `iiab-admin` kull
 ```bash
 sudo ./scripts/download-content.sh
 ```
+Betik ayrıca çevrimdışı [Herbadex](https://herbadex.com) bitkisel ve bitki–ilaç etkileşim rehberini kurar (`config/herbadex.conf`: `maxi` resimli ~13 MB veya `nopic` resimsiz ~7 MB). Herbadex'i sonradan tek başına kurmak ya da güncellemek için:
+```bash
+sudo ./scripts/download-herbadex.sh             # config/herbadex.conf ayarını kullanır
+sudo ./scripts/download-herbadex.sh --variant nopic
+```
 
 **6. Haritalar.** `http://<pi-ip>/admin` adresine gir (kullanıcı adı `iiab-admin`), **Install Content** menüsündeki harita bölümüne git ve istediğin bölgeleri seç.
 
@@ -253,11 +265,13 @@ Hemen kontrol: `sudo ./scripts/disk-health.sh`. Bazı USB adaptörlerinin arkas�
 install.sh                   ana kurulum betiği
 scripts/setup-ssd.sh         SSD'yi /library klasörüne bağlar
 scripts/download-content.sh  Kiwix'ten ZIM dosyalarını indirir/günceller
+scripts/download-herbadex.sh Herbadex çevrimdışı rehberini indirir/günceller (/herbadex/)
 scripts/install-homepage.sh  özel ana sayfayı kurar
 scripts/status.sh            sağlık kontrolü: disk, servisler, hotspot, içerik, güç
 scripts/disk-health.sh       disk ve güç sağlığı denetimi (saglik/: systemd zamanlayıcısı)
 config/iiab-overrides.yml    Internet-in-a-Box ayarları
 config/content.conf          indirilecek içerik listesi
+config/herbadex.conf         Herbadex çevrimdışı varyant (maxi / nopic) ve manifest ayarı
 www/home/index.html          ana sayfa
 www/home/acil.html           acil durum sayfası (AFAD ve EPA kaynaklı)
 ```
@@ -302,6 +316,6 @@ SD kart ve SSD'deki boş alanı, web, Kiwix, hotspot ve DHCP servislerini, hotsp
 
 ### Lisans
 
-Bu repodaki betikler ve ana sayfa [MIT Lisansı](LICENSE) ile yayınlanmıştır. Internet-in-a-Box, Kiwix ve indirilen tüm içerikler (Wikipedia, OpenStreetMap vb.) kendi lisanslarına tabidir. Bu proje Internet-in-a-Box veya Kiwix ile bağlantılı değildir.
+Bu repodaki betikler ve ana sayfa [MIT Lisansı](LICENSE) ile yayınlanmıştır. Internet-in-a-Box, Kiwix ve indirilen tüm içerikler (Wikipedia, OpenStreetMap, Herbadex vb.) kendi lisanslarına tabidir; Herbadex içeriği [CC BY-NC-ND 4.0](https://creativecommons.org/licenses/by-nc-nd/4.0/) lisansı ile yalnızca kişisel ve ticari olmayan çevrimdışı kullanım için sunulur. Bu proje Internet-in-a-Box veya Kiwix ile bağlantılı değildir.
 
 
