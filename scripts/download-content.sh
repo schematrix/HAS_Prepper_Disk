@@ -99,4 +99,10 @@ else
   echo "!! iiab-make-kiwix-lib yok / not found. Internet-in-a-Box kurulu mu? / is Internet-in-a-Box installed?"; failed=1
 fi
 
+HERBADEX_SCRIPT="$(cd "$(dirname "$0")" && pwd)/download-herbadex.sh"
+HERBADEX_CONF="$(cd "$(dirname "$0")/.." && pwd)/config/herbadex.conf"
+if [ "${SKIP_HERBADEX:-0}" != "1" ] && [ -x "$HERBADEX_SCRIPT" ] && [ -f "$HERBADEX_CONF" ]; then
+  "$HERBADEX_SCRIPT" "$HERBADEX_CONF" || failed=1
+fi
+
 exit $failed

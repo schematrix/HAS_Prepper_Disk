@@ -136,6 +136,32 @@ else
   fi
 fi
 
+# Herbadex çevrimdışı rehber (isteğe bağlı) / Herbadex offline guide (optional)
+HERBADEX_DIR="${HERBADEX_DIR:-/library/www/html/herbadex}"
+if [ -f "$HERBADEX_DIR/meta.json" ]; then
+  if has python3; then
+    hb_info=$(python3 - "$HERBADEX_DIR/meta.json" <<'PY' 2>/dev/null
+import json, sys
+with open(sys.argv[1], 'r', encoding='utf-8') as fh:
+    d = json.load(fh)
+ver = d.get('version', '?')
+var = d.get('variant', '?')
+herbs = (d.get('counts') or {}).get('herbs', '?')
+print(f"{ver} ({var}, {herbs} bitki / herbs)")
+PY
+)
+    ok "Herbadex: ${hb_info:-kurulu / installed} ($(du -sh "$HERBADEX_DIR" 2>/dev/null | cut -f1))"
+  else
+    ok "Herbadex kurulu / installed ($(du -sh "$HERBADEX_DIR" 2>/dev/null | cut -f1))"
+  fi
+else
+  info "Herbadex kurulu değil (isteğe bağlı) / not installed (optional): sudo ./scripts/download-herbadex.sh"
+fi
+hb_parts=("$(dirname "$HERBADEX_DIR")"/.herbadex-*.part)
+if [ ${#hb_parts[@]} -gt 0 ]; then
+  bad "${#hb_parts[@]} yarım Herbadex indirmesi / unfinished Herbadex download(s). Devam için / to resume: sudo ./scripts/download-herbadex.sh"
+fi
+
 # ---------------------------------------------------------------- güç ve sıcaklık
 say "Güç ve sıcaklık / power and temperature"
 has vcgencmd || [ -r /sys/class/thermal/thermal_zone0/temp ] || info "okunamadı (Raspberry Pi değil mi?) / not available (not a Raspberry Pi?)"
