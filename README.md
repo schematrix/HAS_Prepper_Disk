@@ -109,6 +109,8 @@ Every 6 hours (and 5 minutes after boot) `scripts/disk-health.sh` checks the `/l
 
 Check now: `sudo ./scripts/disk-health.sh`. Disks behind some USB adapters don't report SMART; those checks are then skipped silently.
 
+If the disk health report can't be saved, the check exits with an error and keeps the last report. For a scheduled run, see `sudo journalctl -u has-disk-health.service -n 20`.
+
 ### Repo layout
 
 ```
@@ -246,6 +248,8 @@ Pi'nin dahili Wi-Fi kartı sadece hotspot için kullanılıyor. Pi'nin geçici o
 - Pi düşük voltajla çalışıyor ya da çalıştı (zayıf güç kaynağı ya da pil diski bozabilir).
 
 Hemen kontrol: `sudo ./scripts/disk-health.sh`. Bazı USB adaptörlerinin arkasındaki diskler SMART bilgisi vermez; o zaman bu kontrol sessizce atlanır.
+
+Disk sağlığı raporu kaydedilemezse denetim hata koduyla çıkar ve son rapor yerinde kalır. Zamanlayıcıyla çalışan denetimin kaydına `sudo journalctl -u has-disk-health.service -n 20` ile bakabilirsin.
 
 ### Repo yapısı
 
