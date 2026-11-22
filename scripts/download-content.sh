@@ -84,7 +84,10 @@ while read -r folder prefix _; do
     echo "   sha256 doğru / checksum OK"
   fi
 
-  mv "$DEST/$latest.part" "$DEST/$latest"
+  if ! mv -T -- "$DEST/$latest.part" "$DEST/$latest"; then
+    echo "!! $latest son konumuna taşınamadı / could not move $latest into place" >&2
+    failed=1; continue
+  fi
   echo "OK $latest tamamlandı / done"
   # Eski sürümleri sil / remove older versions of the same ZIM
   for old in "$DEST/${prefix}"_[0-9][0-9][0-9][0-9]-[0-9][0-9]*.zim; do
