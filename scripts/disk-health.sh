@@ -53,9 +53,18 @@ fi
 
 items=""
 for w in "${warn[@]}"; do items+="${items:+,}\"$w\""; done
-cat > "$OUT.tmp" <<EOF
-{"checked":"$(date -Is)","warnings":[$items]}
-EOF
-chmod 644 "$OUT.tmp" && mv "$OUT.tmp" "$OUT"
+
+report_error(){
+  printf '!! Disk sağlığı raporu yazılamadı / could not write disk health report: %s\n' "$OUT" >&2
+  exit 1
+}
+
+checked=$(date -Is) || report_error
+report_tmp=$(mktemp -- "$OUT.XXXXXX") || report_error
+trap 'rm -f -- "$report_tmp"' EXIT
+printf '{"checked":"%s","warnings":[%s]}\n' "$checked" "$items" > "$report_tmp" &&
+  chmod 0644 -- "$report_tmp" &&
+  mv -T -- "$report_tmp" "$OUT" || report_error
+
 [ ${#warn[@]} -eq 0 ] && echo "OK disk ve güç sağlıklı / disk and power healthy"
 exit 0
