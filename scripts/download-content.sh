@@ -71,7 +71,12 @@ while read -r folder prefix _; do
   fi
 
   # SHA-256 doğrulama / verification
-  expected=$(curl -fsSL -m 60 "$url.sha256" 2>/dev/null | awk '{print $1}')
+  checksum_status=0
+  expected=$(curl -fsSL -m 60 "$url.sha256" 2>/dev/null | awk '{print $1}') || checksum_status=$?
+  if [ "$checksum_status" -eq 28 ]; then
+    echo "!! $latest sha256 isteği zaman aşımına uğradı / checksum request timed out for $latest" >&2
+    failed=1; continue
+  fi
   if [[ ! "$expected" =~ ^[0-9a-f]{64}$ ]]; then
     echo "   Uyarı / warning: $latest için .sha256 yayımlanmamış, doğrulanmadan kabul edildi / no .sha256 published, accepted unverified"
   else
