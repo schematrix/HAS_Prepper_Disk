@@ -78,6 +78,7 @@ During the install Internet-in-a-Box asks three things of its own: a new passwor
 ```bash
 sudo ./scripts/download-content.sh
 ```
+If an SSD is configured for `/library` but isn't mounted, the script stops before downloading. Reconnect the SSD, run `sudo mount /library`, then retry.
 
 **6. Maps.** Open `http://<pi-ip>/admin` (user `iiab-admin`), go to the maps section of the **Install Content** menu and choose the regions you want.
 
@@ -216,6 +217,7 @@ Kurulum sırasında Internet-in-a-Box kendisi üç şey sorar: `iiab-admin` kull
 ```bash
 sudo ./scripts/download-content.sh
 ```
+`/library` için SSD ayarlıysa ve disk bağlı değilse betik indirmeye başlamadan durur. SSD'yi tak, `sudo mount /library` ile bağla ve tekrar dene.
 
 **6. Haritalar.** `http://<pi-ip>/admin` adresine gir (kullanıcı adı `iiab-admin`), **Install Content** menüsündeki harita bölümüne git ve istediğin bölgeleri seç.
 
