@@ -109,6 +109,17 @@ Every 6 hours (and 5 minutes after boot) `scripts/disk-health.sh` checks the `/l
 
 Check now: `sudo ./scripts/disk-health.sh`. Disks behind some USB adapters don't report SMART; those checks are then skipped silently.
 
+### Verify ZIM archives offline
+
+Install `zim-tools` ahead of time with `sudo apt install zim-tools`. After copying archives to a backup disk or after a power cut, check that each `.zim` still matches its embedded checksum. The check only reads the files and can take a while on large archives.
+
+```bash
+./scripts/verify-content.sh                  # /library/zims/content
+./scripts/verify-content.sh /media/backup    # another directory or one .zim file
+```
+
+The script skips `.part` files. It exits with `0` if every archive passes, `1` if a check fails, or `2` if the check cannot start, for example when there are no complete ZIM files.
+
 ### Repo layout
 
 ```
@@ -117,6 +128,7 @@ scripts/setup-ssd.sh       mounts the SSD at /library
 scripts/download-content.sh  downloads/updates ZIM files from Kiwix
 scripts/install-homepage.sh  installs the custom homepage
 scripts/status.sh          health check: disk, services, hotspot, content, power
+scripts/verify-content.sh  offline ZIM checksum check
 scripts/disk-health.sh     disk and power health check (saglik/: its systemd timer)
 config/iiab-overrides.yml  Internet-in-a-Box settings
 config/content.conf        list of content to download
@@ -247,6 +259,17 @@ Pi'nin dahili Wi-Fi kartı sadece hotspot için kullanılıyor. Pi'nin geçici o
 
 Hemen kontrol: `sudo ./scripts/disk-health.sh`. Bazı USB adaptörlerinin arkasındaki diskler SMART bilgisi vermez; o zaman bu kontrol sessizce atlanır.
 
+### ZIM arşivlerini çevrimdışı doğrula
+
+`sudo apt install zim-tools` komutuyla aracı önceden kur. Arşivleri yedek diske kopyaladıktan veya elektrik kesintisi yaşadıktan sonra `.zim` dosyalarını kendi içlerindeki sağlama toplamıyla kontrol edebilirsin. Betik dosyaları sadece okur. Büyük arşivlerin taranması zaman alabilir.
+
+```bash
+./scripts/verify-content.sh                  # /library/zims/content
+./scripts/verify-content.sh /media/backup    # başka bir klasör veya tek bir .zim dosyası
+```
+
+Betik `.part` dosyalarını atlar. Tüm arşivler geçerse `0`, bir kontrol başarısız olursa `1`, kontrol başlayamazsa `2` döner. Örneğin klasörde tamamlanmış ZIM yoksa sonuç `2` olur.
+
 ### Repo yapısı
 
 ```
@@ -255,6 +278,7 @@ scripts/setup-ssd.sh         SSD'yi /library klasörüne bağlar
 scripts/download-content.sh  Kiwix'ten ZIM dosyalarını indirir/günceller
 scripts/install-homepage.sh  özel ana sayfayı kurar
 scripts/status.sh            sağlık kontrolü: disk, servisler, hotspot, içerik, güç
+scripts/verify-content.sh    çevrimdışı ZIM sağlama kontrolü
 scripts/disk-health.sh       disk ve güç sağlığı denetimi (saglik/: systemd zamanlayıcısı)
 config/iiab-overrides.yml    Internet-in-a-Box ayarları
 config/content.conf          indirilecek içerik listesi
