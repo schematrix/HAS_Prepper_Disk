@@ -35,7 +35,12 @@ PMTILES_SHA_x86_64=3ed7dbf4ec2e6dfe5e25b6f70d1ffc932729f93c86db353bf514dd71010a3
 PMTILES_SHA_arm64=f8bd47e7ea866863489cad588fbaf2f31f42e5821f7a03f009b3769f05801cb1
 BUILDS_URL=https://build-metadata.protomaps.dev/builds.json
 BUILD_BASE=https://build.protomaps.com
-ASSETS_URL=https://github.com/protomaps/basemaps-assets/archive/refs/heads/main.tar.gz
+# Yazı tipi/sprite paketi: dal değil commit'e sabit, tarball sha256'sı doğrulanır (betik root çalışır).
+# Fonts/sprites archive: pinned to a commit, not a branch, and its tarball sha256 is verified (the script runs as root).
+# Güncellerken üçünü birlikte değiştir / update all three together:
+ASSETS_COMMIT=028c18f713baecad011301ff7a69acc39bcc2ae7   # protomaps/basemaps-assets, 2025-10-31
+ASSETS_SHA256=57e40e8c512bd8042d0a3a251f19d0d1c8523ad963c666c3c6643bada4dc92d0
+ASSETS_URL="https://github.com/protomaps/basemaps-assets/archive/$ASSETS_COMMIT.tar.gz"
 JSD=https://cdn.jsdelivr.net/npm
 LOCK=/run/lock/harita-indir.lock
 
@@ -92,7 +97,17 @@ echo "pmtiles: $(pmtiles version 2>&1 | head -1)"
 # --- en yeni planet build / latest planet build --------------------------------------------------------
 if [ -z "$MAP_BUILD" ]; then
   MAP_BUILD=$(curl -fsSL -m 60 "$BUILDS_URL" | grep -oE '"key":"[0-9]{8}\.pmtiles"' | grep -oE '[0-9]{8}' | sort | tail -1)
-  [ -n "$MAP_BUILD" ] || { echo "!! build listesi alınamadı / cannot read $BUILDS_URL" >&2; exit 1; }
+  # builds.json alınamazsa (dosyalar build.protomaps.com'dan yine de iner) son günlerin dosyasını doğrudan dene.
+  # If builds.json cannot be read (the files still download from build.protomaps.com), probe the last days directly.
+  # Öneri / suggested by Proxy34 (PR #5).
+  if [ -z "$MAP_BUILD" ]; then
+    echo "uyarı: build listesi alınamadı, son günler deneniyor / warning: cannot read $BUILDS_URL, probing recent days" >&2
+    for i in $(seq 0 10); do
+      d=$(date -u -d "-$i day" +%Y%m%d)
+      if curl -fsI -m 20 "$BUILD_BASE/$d.pmtiles" >/dev/null 2>&1; then MAP_BUILD=$d; break; fi
+    done
+  fi
+  [ -n "$MAP_BUILD" ] || { echo "!! build bulunamadı / no planet build found ($BUILDS_URL, $BUILD_BASE)" >&2; exit 1; }
 fi
 OUT="$MAPS/$MAP_NAME.pmtiles"; META="$MAPS/map.json"
 have=""; [ -f "$META" ] && have=$(grep -oE '"build": *"[0-9]{8}"' "$META" | grep -oE '[0-9]{8}')
@@ -134,19 +149,26 @@ if [ "$extract" = 1 ]; then
 fi
 
 # --- yazı tipleri + sprite'lar (basemaps-assets, ~6 MB) / fonts + sprites ------------------------------
-if [ ! -f "$MAPS/assets/sprites/v4/light.json" ] || [ ! -f "$MAPS/assets/fonts/Noto Sans Regular/0-255.pbf" ]; then
+# .commit damgası: sabitlenen commit değişirse (ya da eski betikle dal başından inmişse) paket bir kez yenilenir.
+# The .commit stamp re-fetches the pack once when the pinned commit changes (or it came from an older, unpinned script).
+if [ ! -f "$MAPS/assets/sprites/v4/light.json" ] || [ ! -f "$MAPS/assets/fonts/Noto Sans Regular/0-255.pbf" ] \
+   || [ "$(cat "$MAPS/assets/.commit" 2>/dev/null)" != "$ASSETS_COMMIT" ]; then
   tmp=$(mktemp -d)
-  echo "[$(date -Is)] >> yazı tipi/sprite paketi indiriliyor / downloading fonts and sprites"
+  echo "[$(date -Is)] >> yazı tipi/sprite paketi indiriliyor / downloading fonts and sprites (${ASSETS_COMMIT:0:10})"
+  top="basemaps-assets-$ASSETS_COMMIT"
   if curl -fsSL -m 300 -o "$tmp/assets.tgz" "$ASSETS_URL" \
+     && { echo "$ASSETS_SHA256  $tmp/assets.tgz" | sha256sum -c --quiet \
+          || { echo "!! paket sha256 uyuşmuyor, kurulmadı / assets sha256 mismatch, not installed" >&2; false; }; } \
      && mkdir -p "$MAPS/assets" \
      && tar xzf "$tmp/assets.tgz" -C "$MAPS/assets" --strip-components=1 --wildcards \
-          'basemaps-assets-main/fonts/Noto Sans Regular/*' 'basemaps-assets-main/fonts/Noto Sans Medium/*' \
-          'basemaps-assets-main/fonts/Noto Sans Italic/*' 'basemaps-assets-main/fonts/OFL.txt' \
-          'basemaps-assets-main/sprites/v4/*' 'basemaps-assets-main/README.md'; then
+          "$top/fonts/Noto Sans Regular/*" "$top/fonts/Noto Sans Medium/*" \
+          "$top/fonts/Noto Sans Italic/*" "$top/fonts/OFL.txt" \
+          "$top/sprites/v4/*" "$top/README.md"; then
+    echo "$ASSETS_COMMIT" > "$MAPS/assets/.commit"
     chmod -R a+rX "$MAPS/assets"
     echo "   OK fonts: $(find "$MAPS/assets/fonts" -name '*.pbf' | wc -l) pbf, sprites: $(ls "$MAPS/assets/sprites/v4" | wc -l) dosya/files"
   else
-    echo "!! paket indirilemedi; etiketler ve simgeler görünmez (tekrar çalıştır) / assets failed, labels and icons will be missing" >&2
+    echo "!! paket indirilemedi veya doğrulanamadı; etiketler ve simgeler görünmez (tekrar çalıştır) / assets failed, labels and icons will be missing" >&2
     failed=1
   fi
   rm -rf "$tmp"
