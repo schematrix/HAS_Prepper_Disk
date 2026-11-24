@@ -218,6 +218,7 @@ function render(books){
   let html = "", ready = 0, total = 0;
   const used = new Set();
   const sel = document.getElementById("book");
+  sel.add(new Option("Tüm kütüphane", ""));
   for (const c of CATS) {
     html += `<tr><td class="cat" colspan="5">${esc(c.title)}</td></tr>`;
     for (const i of c.items) {
@@ -261,7 +262,6 @@ function render(books){
     }
   }
   document.getElementById("forums").insertAdjacentHTML("beforeend", html);
-  if (!sel.options.length) sel.add(new Option("Tüm kütüphane", ""));
   document.getElementById("stats").innerHTML =
     `Toplam <b>${total}</b> kaynak var, bunlardan <b>${ready}</b> tanesi kullanıma hazır.<br>
      Bu sayfa internet bağlantısı olmadan çalışır.`;
