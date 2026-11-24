@@ -111,7 +111,7 @@ Check now: `sudo ./scripts/disk-health.sh`. Disks behind some USB adapters don't
 
 ### Verify ZIM archives offline
 
-Install `zim-tools` ahead of time with `sudo apt install zim-tools`. After copying archives to a backup disk or after a power cut, check that each `.zim` still matches its embedded checksum. The check only reads the files and can take a while on large archives.
+After a verified download, `download-content.sh` keeps the publisher's matching SHA-256 in a neighboring `.zim.sha256` file. `verify-content.sh` checks against that saved value offline. Archives without a saved value are checked against their embedded checksum using `zimcheck` (install `zim-tools` ahead of time with `sudo apt install zim-tools`). Keep each `.zim.sha256` with its archive when copying it manually. The check only reads the files and can take a while on large archives.
 
 ```bash
 ./scripts/verify-content.sh                  # /library/zims/content
@@ -261,7 +261,7 @@ Hemen kontrol: `sudo ./scripts/disk-health.sh`. Bazı USB adaptörlerinin arkas�
 
 ### ZIM arşivlerini çevrimdışı doğrula
 
-`sudo apt install zim-tools` komutuyla aracı önceden kur. Arşivleri yedek diske kopyaladıktan veya elektrik kesintisi yaşadıktan sonra `.zim` dosyalarını kendi içlerindeki sağlama toplamıyla kontrol edebilirsin. Betik dosyaları sadece okur. Büyük arşivlerin taranması zaman alabilir.
+`download-content.sh`, doğrulanmış indirme sonrasında yayıncının eşleşen SHA-256 değerini arşivin yanındaki `.zim.sha256` dosyasında saklar. `verify-content.sh` internetsiz olarak bu kayıtla karşılaştırır. Kayıt yoksa arşivin kendi sağlama toplamını `zimcheck` ile kontrol eder (aracı önceden `sudo apt install zim-tools` ile kur). Elle kopyalarken `.zim.sha256` dosyasını da arşivin yanında tut. Betik dosyaları sadece okur; büyük arşivlerin taranması zaman alabilir.
 
 ```bash
 ./scripts/verify-content.sh                  # /library/zims/content

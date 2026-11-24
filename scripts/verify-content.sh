@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Tamamlanmış ZIM dosyalarını yerleşik sağlama toplamıyla çevrimdışı doğrular.
-# Verifies complete ZIM archives offline using their embedded checksum.
+# Tamamlanmış ZIM dosyalarını kayıtlı SHA-256 veya yerleşik sağlama toplamıyla doğrular.
+# Verifies complete ZIM archives offline against a saved SHA-256 or embedded checksum.
 set -uo pipefail
 shopt -s nullglob
 
@@ -23,18 +23,24 @@ else
   exit 2
 fi
 
-if ! command -v zimcheck >/dev/null; then
-  echo '!! zimcheck bulunamadı / not found. Kurulum / install: sudo apt install zim-tools' >&2
-  exit 2
-fi
-
 checked=0
 failed=0
 for archive in "${archives[@]}"; do
   [ -f "$archive" ] || continue
   checked=$((checked + 1))
   printf '>> Doğrulanıyor / checking: %s\n' "$archive"
-  if ! zimcheck --checksum "$archive"; then
+  if [[ -e "$archive.sha256" || -L "$archive.sha256" ]]; then
+    if [ ! -f "$archive.sha256" ] || ! expected=$(<"$archive.sha256") || [[ ! "$expected" =~ ^[0-9a-f]{64}$ ]]; then
+      printf '!! Geçersiz SHA-256 kaydı / invalid saved SHA-256: %s\n' "$archive.sha256" >&2
+      failed=$((failed + 1))
+    elif ! actual=$(sha256sum < "$archive") || [ "${actual%% *}" != "$expected" ]; then
+      printf '!! SHA-256 uyuşmuyor / SHA-256 verification failed: %s\n' "$archive" >&2
+      failed=$((failed + 1))
+    fi
+  elif ! command -v zimcheck >/dev/null; then
+    echo '!! zimcheck bulunamadı / not found. Kurulum / install: sudo apt install zim-tools' >&2
+    exit 2
+  elif ! zimcheck --checksum "$archive"; then
     printf '!! Doğrulanamadı / verification failed: %s\n' "$archive" >&2
     failed=$((failed + 1))
   fi
