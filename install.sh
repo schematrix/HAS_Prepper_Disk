@@ -80,6 +80,12 @@ say "3/3 Ana sayfa / homepage"
 "$REPO/scripts/install-homepage.sh"
 "$REPO/scripts/install-disk-health.sh"
 
+say "Kurulum sonrası sağlık kontrolü / post-install health check"
+echo "İçerikler henüz indirilmediyse ZIM uyarıları normaldir / ZIM warnings are expected before downloading content."
+if ! "$REPO/scripts/status.sh"; then
+  echo "Sağlık kontrolünün uyarılarını incele / review the health check warnings."
+fi
+
 IP=$(hostname -I | awk '{print $1}')
 say "Bitti / done"
 cat <<EOF
