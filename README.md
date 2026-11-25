@@ -44,6 +44,8 @@ Built on [Internet-in-a-Box](https://github.com/iiab/iiab) and [Kiwix](https://k
 | Ethernet cable | Recommended during install |
 | RTC battery (optional) | Keeps system time offline (e.g. official SC1163) |
 
+The installer and configuration in this repository target Raspberry Pi 5 with Raspberry Pi OS Lite (64-bit). This repository does not provide setup instructions or verified support for x86 PCs, laptops, or other single-board computers.
+
 > **RTC battery note:** Without internet access, the Pi 5 cannot sync time via NTP. When power is lost, the internal RTC clock resets unless a backup battery is connected to the J5 (BAT) connector. If you use the official rechargeable Panasonic ML-2020 battery (SC1163), enable trickle-charging by adding `dtparam=rtc_bbat_vchg=3000000` to `/boot/firmware/config.txt`. *(Do not enable charging if using standard non-rechargeable CR2032 cells).*
 
 
@@ -185,6 +187,8 @@ Raspberry Pi 5 üzerinde çevrimdışı bilgi arşivi. Wikipedia, haritalar, tı
 | Aktif soğutucu | Pi 5 ve SSD ısınır |
 | Ethernet kablosu | Kurulum sırasında önerilir |
 | RTC pili (isteğe bağlı) | İnternetsiz ortamda sistem saatini korur (örn. resmi SC1163) |
+
+Bu repodaki kurulum betikleri ve ayarlar, Raspberry Pi 5 ile Raspberry Pi OS Lite (64-bit) için hazırlanmıştır. x86 bilgisayarlar, dizüstüler veya diğer tek kart bilgisayarlar için kurulum yönergesi ya da doğrulanmış destek sunulmuyor.
 
 > **RTC pili notu:** Afet durumunda internet bağlantısı olmadığı için Pi 5 zamanı NTP üzerinden eşitleyemez. Elektrik kesildiğinde sistem saatinin sıfırlanmaması için Pi 5'in J5 (BAT) yuvasına bir yedek pil takılması önerilir. Resmi şarj edilebilir Panasonic ML-2020 pil (SC1163) kullanıyorsanız, `/boot/firmware/config.txt` dosyasına `dtparam=rtc_bbat_vchg=3000000` ekleyerek şarj özelliğini açabilirsiniz. *(Standart şarj edilmeyen CR2032 pillerde bu ayarı kesinlikle açmayın).*
 
