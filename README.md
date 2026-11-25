@@ -78,6 +78,12 @@ During the install Internet-in-a-Box asks three things of its own: a new passwor
 ```bash
 sudo ./scripts/download-content.sh
 ```
+The 160 GB estimate is for the default ZIM downloads; it does not include maps selected separately in the admin console. Actual sizes change with the Kiwix catalog. Check current use and free space with:
+```bash
+du -sh /library/zims/content
+df -h /library
+```
+The download script keeps 5 GB free by default (`RESERVE_GB=5`). Leave additional space for the operating system, temporary files and any maps you add.
 
 **6. Maps.** Open `http://<pi-ip>/admin` (user `iiab-admin`), go to the maps section of the **Install Content** menu and choose the regions you want.
 
@@ -216,6 +222,12 @@ Kurulum sırasında Internet-in-a-Box kendisi üç şey sorar: `iiab-admin` kull
 ```bash
 sudo ./scripts/download-content.sh
 ```
+160 GB değeri varsayılan ZIM indirmelerinin yaklaşık boyutudur; yönetim panelinden ayrıca seçilen haritalar bu hesaba dahil değildir. Kiwix kataloğu değiştikçe gerçek boyut da değişir. Kullanılan ve boş alanı şu komutlarla kontrol et:
+```bash
+du -sh /library/zims/content
+df -h /library
+```
+İndirme betiği varsayılan olarak 5 GB boş alan bırakır (`RESERVE_GB=5`). İşletim sistemi, geçici dosyalar ve ekleyeceğin haritalar için de yer bırak.
 
 **6. Haritalar.** `http://<pi-ip>/admin` adresine gir (kullanıcı adı `iiab-admin`), **Install Content** menüsündeki harita bölümüne git ve istediğin bölgeleri seç.
 
