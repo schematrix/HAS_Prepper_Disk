@@ -1,0 +1,23 @@
+[Unit]
+Description=HAS_PrepperDisk: Heartbeat service
+
+[Service]
+Type=oneshot
+Environment=HAS_HEARTBEAT_SAMPLE_CONF=
+ExecStart=/usr/local/lib/has-heartbeat/heartbeat.sh
+
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6 AF_NETLINK
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+SystemCallArchitectures=native
+CapabilityBoundingSet=
