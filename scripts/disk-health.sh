@@ -51,8 +51,22 @@ if command -v vcgencmd >/dev/null; then
   fi
 fi
 
+# escape
 items=""
-for w in "${warn[@]}"; do items+="${items:+,}\"$w\""; done
+if command -v python3 >/dev/null 2>&1; then
+  items=$(python3 -c 'import json, sys
+print(",".join(json.dumps(w) for w in sys.argv[1:]))' "${warn[@]}" 2>/dev/null) || items=""
+fi
+if [ -z "$items" ] && [ ${#warn[@]} -gt 0 ]; then
+  for w in "${warn[@]}"; do
+    w=${w//\\/\\\\}
+    w=${w//\"/\\\"}
+    w=${w//$'\n'/\\n}
+    w=${w//$'\r'/\\r}
+    w=${w//$'\t'/\\t}
+    items+="${items:+,}\"$w\""
+  done
+fi
 cat > "$OUT.tmp" <<EOF
 {"checked":"$(date -Is)","warnings":[$items]}
 EOF
