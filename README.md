@@ -83,6 +83,12 @@ sudo ./scripts/download-content.sh
 
 **7. Use it.** Join the Wi-Fi network you created and open **http://box.lan/home**.
 
+### Offline operation and network traffic
+
+After installation and content downloads, devices on the Pi's hotspot can open the homepage and stored content without internet access. The homepage code in this repository sends browser requests only to the Pi itself: it reads the local Kiwix catalog and `/home/disk.json`, gets the displayed time from the Pi's HTTP response, and sends searches to the local `/kiwix/search` page. It contains no third-party analytics tags.
+
+Internet access is needed for OS updates, the initial Internet-in-a-Box install, ZIM downloads and map downloads. `install.sh` fetches Internet-in-a-Box files; `scripts/download-content.sh` reads the Kiwix catalog and downloads ZIM files and their checksums. Maps are downloaded separately from the admin console. Internet-in-a-Box and the operating system may make their own requests; this section describes only this repository's homepage and scripts.
+
 ### Optional: internet over a USB Wi-Fi adapter
 
 The Pi's built-in Wi-Fi is dedicated to the hotspot. If the Pi needs internet temporarily (updates, new content) and there is no Ethernet cable, add a cheap USB Wi-Fi adapter as a second card. Adapters with the MediaTek MT7601U chip work out of the box.
@@ -220,6 +226,12 @@ sudo ./scripts/download-content.sh
 **6. Haritalar.** `http://<pi-ip>/admin` adresine gir (kullanıcı adı `iiab-admin`), **Install Content** menüsündeki harita bölümüne git ve istediğin bölgeleri seç.
 
 **7. Kullan.** Oluşturduğun Wi-Fi ağına bağlan ve **http://box.lan/home** adresini aç.
+
+### İnternetsiz kullanım ve ağ trafiği
+
+Kurulum ve içerik indirmeleri bittikten sonra Pi'nin hotspot'una bağlanan cihazlar ana sayfayı ve indirilen içerikleri internet olmadan açabilir. Bu repodaki ana sayfa tarayıcı isteklerini yalnızca Pi'ye gönderir: yerel Kiwix kataloğunu ve `/home/disk.json` dosyasını okur, ekrandaki saati Pi'nin HTTP yanıtından alır ve aramaları Pi'deki `/kiwix/search` adresine yollar. Üçüncü taraf analiz kodu içermez.
+
+İşletim sistemi güncellemeleri, ilk Internet-in-a-Box kurulumu, ZIM ve harita indirmeleri için internet gerekir. `install.sh` Internet-in-a-Box dosyalarını indirir; `scripts/download-content.sh` Kiwix kataloğunu okur, ZIM dosyalarını ve özetlerini indirir. Haritalar yönetim panelinden ayrıca indirilir. Internet-in-a-Box ve işletim sistemi kendi ağ isteklerini yapabilir; bu bölüm yalnızca bu repodaki ana sayfa ve betikleri açıklar.
 
 ### İsteğe bağlı: USB Wi-Fi adaptörüyle internet
 
