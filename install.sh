@@ -10,6 +10,7 @@
 # Kullanım / usage:  sudo ./install.sh
 # Soru sormadan / non-interactive (HAS Disk kurulum butonu bunu kullanır):
 #   sudo HAS_YES=1 HAS_SSID="HAS Disk" HAS_PASS="sifre1234" ./install.sh
+# HAS_HOSTNAME=hasdisk: cihaz adı (varsayılan IIAB adı "box"; hotspot adresi <ad>.lan olur).
 # HAS_DEFER_HOTSPOT=1: kurulumda hotspot açılmaz, Wi-Fi bağlantısı korunur (içerik indirmek için).
 #   Hotspot sonra açılır / hotspot is enabled later with:  sudo iiab-hotspot-on
 set -euo pipefail
@@ -60,6 +61,11 @@ else
     case "$line" in ''|\#*) continue;; esac
     set_var "${line%%:*}" "$(echo "${line#*:}" | sed 's/^ *//')"
   done < "$REPO/config/iiab-overrides.yml"
+
+  if [ -n "${HAS_HOSTNAME:-}" ]; then
+    set_var iiab_hostname "$HAS_HOSTNAME"
+    echo "Cihaz adı / hostname: $HAS_HOSTNAME"
+  fi
 
   if [ "${HAS_DEFER_HOTSPOT:-}" = 1 ]; then
     set_var hostapd_enabled False
