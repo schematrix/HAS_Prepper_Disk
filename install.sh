@@ -8,6 +8,10 @@
 # If the Pi reboots during install, just run this script again.
 #
 # Kullanım / usage:  sudo ./install.sh
+# Soru sormadan / non-interactive (HAS Disk kurulum butonu bunu kullanır):
+#   sudo HAS_YES=1 HAS_SSID="HAS Disk" HAS_PASS="sifre1234" ./install.sh
+# HAS_DEFER_HOTSPOT=1: kurulumda hotspot açılmaz, Wi-Fi bağlantısı korunur (içerik indirmek için).
+#   Hotspot sonra açılır / hotspot is enabled later with:  sudo iiab-hotspot-on
 set -euo pipefail
 
 REPO="$(cd "$(dirname "$0")" && pwd)"
@@ -31,8 +35,12 @@ if ! mountpoint -q /library; then
   echo "Uyarı: /library ayrı bir diske bağlı değil. İçerikler SD karta yazılır."
   echo "Warning: /library is not on a separate disk. Content will go to the SD card."
   echo "SSD için önce / for an SSD first run:  sudo ./scripts/setup-ssd.sh /dev/nvme0n1"
-  read -rp "Yine de devam? / Continue anyway? [e/y/N] " a
-  case "$a" in e|E|y|Y) ;; *) exit 1;; esac
+  if [ "${HAS_YES:-}" = 1 ]; then
+    echo "HAS_YES=1: SD kart ile devam / continuing on the SD card"
+  else
+    read -rp "Yine de devam? / Continue anyway? [e/y/N] " a
+    case "$a" in e|E|y|Y) ;; *) exit 1;; esac
+  fi
 else
   df -h /library | tail -1
 fi
@@ -53,13 +61,26 @@ else
     set_var "${line%%:*}" "$(echo "${line#*:}" | sed 's/^ *//')"
   done < "$REPO/config/iiab-overrides.yml"
 
-  read -rp "Wi-Fi ağ adı / network name [HAS_PrepperDisk]: " SSID
-  SSID="${SSID:-HAS_PrepperDisk}"
-  while :; do
-    read -rsp "Wi-Fi şifresi / password (en az 8 karakter / min 8 chars): " PASS; echo
-    [ "${#PASS}" -ge 8 ] && break
-    echo "Çok kısa / too short"
-  done
+  if [ "${HAS_DEFER_HOTSPOT:-}" = 1 ]; then
+    set_var hostapd_enabled False
+    echo "HAS_DEFER_HOTSPOT=1: hotspot şimdilik kapalı / hotspot deferred"
+  fi
+
+  SSID="${HAS_SSID:-}"
+  PASS="${HAS_PASS:-}"
+  if [ -z "$SSID" ]; then
+    read -rp "Wi-Fi ağ adı / network name [HAS_PrepperDisk]: " SSID
+    SSID="${SSID:-HAS_PrepperDisk}"
+  fi
+  if [ -n "$PASS" ]; then
+    [ "${#PASS}" -ge 8 ] || die "HAS_PASS en az 8 karakter olmalı / must be at least 8 chars"
+  else
+    while :; do
+      read -rsp "Wi-Fi şifresi / password (en az 8 karakter / min 8 chars): " PASS; echo
+      [ "${#PASS}" -ge 8 ] && break
+      echo "Çok kısa / too short"
+    done
+  fi
   set_var host_ssid "\"${SSID//\"/}\""
   set_var hostapd_password "\"${PASS//\"/}\""
   echo "Ayarlar yazıldı / settings written: $VARS"
