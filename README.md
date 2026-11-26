@@ -99,6 +99,17 @@ The Pi's built-in Wi-Fi is dedicated to the hotspot. If the Pi needs internet te
 
 **Never run `sudo iiab-network` while a USB Wi-Fi adapter is plugged in.** It may move the hotspot onto the adapter. Unplug it first.
 
+### Back up ZIM archives to USB
+
+Install `rsync` with `sudo apt install rsync` and mount a separate backup disk writable by your user. Preview the copy, then run it with the disk's mount point:
+
+```bash
+./scripts/backup-content.sh --dry-run /media/usb
+./scripts/backup-content.sh /media/usb
+```
+
+Completed `.zim` files go into `HAS-zims/` on the backup disk. Run the same command after an interruption to resume. Unchanged files are skipped and older archives with different filenames stay on the backup disk. Use a filesystem that supports large files, such as ext4 or exFAT.
+
 ### Disk and power health
 
 Every 6 hours (and 5 minutes after boot) `scripts/disk-health.sh` checks the `/library` disk and the Pi's power supply. If something is wrong, a red warning appears at the top of the homepage:
@@ -127,6 +138,7 @@ The script skips `.part` files. It exits with `0` if every archive passes, `1` i
 install.sh                 main installer
 scripts/setup-ssd.sh       mounts the SSD at /library
 scripts/download-content.sh  downloads/updates ZIM files from Kiwix
+scripts/backup-content.sh   backs up completed ZIM archives to a separate disk
 scripts/install-homepage.sh  installs the custom homepage
 scripts/status.sh          health check: disk, services, hotspot, content, power
 scripts/verify-content.sh  offline ZIM checksum check
@@ -250,6 +262,17 @@ Pi'nin dahili Wi-Fi kartı sadece hotspot için kullanılıyor. Pi'nin geçici o
 
 **USB Wi-Fi adaptörü takılıyken asla `sudo iiab-network` çalıştırma.** Hotspot'u adaptöre taşıyabilir. Önce adaptörü çıkar.
 
+### ZIM arşivlerini USB diske yedekle
+
+`sudo apt install rsync` ile aracı kur ve ayrı bir yedek diski, kullanıcının yazabileceği şekilde bağla. Diskin bağlandığı yolu vererek önce kopyayı önizle, sonra başlat.
+
+```bash
+./scripts/backup-content.sh --dry-run /media/usb
+./scripts/backup-content.sh /media/usb
+```
+
+Tamamlanmış `.zim` dosyaları yedek diskteki `HAS-zims/` klasörüne gider. İşlem kesilirse aynı komutla devam edebilirsin. Değişmeyen dosyalar atlanır, farklı dosya adına sahip eski arşivler yedek diskte kalır. Büyük dosyaları destekleyen ext4 veya exFAT gibi bir dosya sistemi kullan.
+
 ### Disk ve güç sağlığı
 
 `scripts/disk-health.sh` 6 saatte bir (ve açılıştan 5 dakika sonra) `/library` diskine ve Pi'nin güç kaynağına bakar. Bir sorun varsa ana sayfanın en üstünde kırmızı bir uyarı çıkar:
@@ -278,6 +301,7 @@ Betik `.part` dosyalarını atlar. Tüm arşivler geçerse `0`, bir kontrol baş
 install.sh                   ana kurulum betiği
 scripts/setup-ssd.sh         SSD'yi /library klasörüne bağlar
 scripts/download-content.sh  Kiwix'ten ZIM dosyalarını indirir/günceller
+scripts/backup-content.sh    tamamlanmış ZIM dosyalarını ayrı bir diske yedekler
 scripts/install-homepage.sh  özel ana sayfayı kurar
 scripts/status.sh            sağlık kontrolü: disk, servisler, hotspot, içerik, güç
 scripts/verify-content.sh    çevrimdışı ZIM sağlama kontrolü
