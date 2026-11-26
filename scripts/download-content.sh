@@ -9,6 +9,7 @@
 # the directory listing is only a fallback when the catalog is unreachable.
 # Her dosya indirildikten sonra Kiwix'in yayımladığı .sha256 ile doğrulanır, bozuksa silinir.
 # Each download is verified against the .sha256 Kiwix publishes next to it; a corrupt file is deleted.
+# Eşleşen SHA-256 değeri saklanır. / The matching SHA-256 is saved for offline checks.
 #
 # Kullanım / usage:  sudo ./scripts/download-content.sh [config-dosyası]
 # Ortam / environment:  DEST=/library/zims/content  RESERVE_GB=5 (boş bırakılacak pay / headroom to keep free)
@@ -98,6 +99,10 @@ while read -r folder prefix _; do
   fi
   if [[ ! "$expected" =~ ^[0-9a-f]{64}$ ]]; then
     echo "   Uyarı / warning: $latest için .sha256 yayımlanmamış, doğrulanmadan kabul edildi / no .sha256 published, accepted unverified"
+    if ! rm -f -- "$DEST/$latest.sha256"; then
+      echo "!! Eski SHA-256 kaydı temizlenemedi / could not clear stale SHA-256: $latest" >&2
+      failed=1; continue
+    fi
   else
     echo "   sha256 hesaplanıyor / verifying checksum"
     actual=$(sha256sum "$DEST/$latest.part" | awk '{print $1}')
@@ -106,6 +111,17 @@ while read -r folder prefix _; do
       rm -f "$DEST/$latest.part"; failed=1; continue
     fi
     echo "   sha256 doğru / checksum OK"
+    # Store the publisher's verified checksum before publishing the archive.
+    if ! checksum_tmp=$(mktemp "$DEST/.${latest}.sha256.XXXXXX"); then
+      failed=1; continue
+    fi
+    if ! printf '%s\n' "$expected" > "$checksum_tmp" ||
+       ! chmod 644 "$checksum_tmp" ||
+       ! mv -T -- "$checksum_tmp" "$DEST/$latest.sha256"; then
+      rm -f -- "$checksum_tmp"
+      echo "!! SHA-256 kaydedilemedi / could not save SHA-256: $latest" >&2
+      failed=1; continue
+    fi
   fi
 
   if ! mv -T -- "$DEST/$latest.part" "$DEST/$latest"; then
@@ -115,7 +131,7 @@ while read -r folder prefix _; do
   echo "OK $latest tamamlandı / done"
   # Eski sürümleri sil / remove older versions of the same ZIM
   for old in "$DEST/${prefix}"_[0-9][0-9][0-9][0-9]-[0-9][0-9]*.zim; do
-    [ "$old" != "$DEST/$latest" ] && [ -f "$old" ] && { echo "-- eski sürüm siliniyor / removing $old"; rm -f "$old"; }
+    [ "$old" != "$DEST/$latest" ] && [ -f "$old" ] && { echo "-- eski sürüm siliniyor / removing $old"; rm -f -- "$old" && rm -f -- "$old.sha256"; }
   done
 done < "$CONF"
 
