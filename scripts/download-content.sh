@@ -112,7 +112,10 @@ done < "$CONF"
 
 echo ">> Kiwix kütüphanesi güncelleniyor / rebuilding Kiwix library"
 if command -v iiab-make-kiwix-lib >/dev/null; then
-  iiab-make-kiwix-lib
+  iiab-make-kiwix-lib || {
+    printf '!! Kiwix kütüphanesi güncellenemedi / Kiwix library rebuild failed (exit %s)\n' "$?" >&2
+    failed=1
+  }
 else
   echo "!! iiab-make-kiwix-lib yok / not found. Internet-in-a-Box kurulu mu? / is Internet-in-a-Box installed?"; failed=1
 fi
