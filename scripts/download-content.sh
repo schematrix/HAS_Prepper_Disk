@@ -20,11 +20,20 @@ DEST="${DEST:-/library/zims/content}"
 RESERVE_GB="${RESERVE_GB:-5}"
 BASE=https://download.kiwix.org/zim
 CATALOG_URL="${CATALOG_URL:-https://library.kiwix.org/catalog/v2/entries?count=-1}"
+
+if ! mountpoint -q /library; then
+  if findmnt --fstab --mountpoint /library >/dev/null; then
+    echo "HATA / ERROR: /library için ayarlı disk bağlı değil / the configured disk for /library is not mounted" >&2
+    echo "Diski bağlayıp tekrar çalıştır / mount the disk and retry: sudo mount /library" >&2
+    exit 1
+  fi
+  echo "Uyarı / warning: /library ayrı bir disk değil / is not a separate disk (SD kart dolabilir / SD card may fill up)"
+fi
+
 CAT=$(mktemp)
 trap 'rm -f "$CAT"' EXIT
 
 mkdir -p "$DEST"
-mountpoint -q /library || echo "Uyarı / warning: /library ayrı bir disk değil / is not a separate disk (SD kart dolabilir / SD card may fill up)"
 
 echo ">> Kiwix kataloğu alınıyor / fetching Kiwix catalog"
 if ! curl -fsSL -m 300 "$CATALOG_URL" -o "$CAT"; then
