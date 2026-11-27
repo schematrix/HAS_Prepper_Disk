@@ -47,7 +47,19 @@ LOCK=/run/lock/harita-indir.lock
 UPDATE=0; FORCE=0
 for a in "$@"; do case "$a" in --update) UPDATE=1;; --force) FORCE=1;; *) echo "bilinmeyen seçenek / unknown option: $a" >&2; exit 2;; esac; done
 [ "$EUID" -eq 0 ] || { echo "sudo ile çalıştır / run with sudo" >&2; exit 1; }
-[ -d "$WEB" ] || { echo "$WEB yok. Önce Internet-in-a-Box'ı kur / install Internet-in-a-Box first" >&2; exit 1; }
+# download-content.sh ile aynı koruma: /library için ayarlı disk bağlı değilse SD karta yazma.
+# Same guard as download-content.sh: never write to the SD card when the configured /library disk is not mounted.
+case "$WEB" in /library|/library/*)
+  if ! mountpoint -q /library; then
+    if findmnt --fstab --mountpoint /library >/dev/null; then
+      echo "HATA / ERROR: /library için ayarlı disk bağlı değil / the configured disk for /library is not mounted" >&2
+      echo "Diski bağlayıp tekrar çalıştır / mount the disk and retry: sudo mount /library" >&2
+      exit 1
+    fi
+    echo "Uyarı / warning: /library ayrı bir disk değil / is not a separate disk (SD kart dolabilir / SD card may fill up)"
+  fi;;
+esac
+[ -d "$WEB" ] ||{ echo "$WEB yok. Önce Internet-in-a-Box'ı kur / install Internet-in-a-Box first" >&2; exit 1; }
 for c in curl tar sha256sum flock; do command -v "$c" >/dev/null || { echo "$c gerekli / required" >&2; exit 1; }; done
 exec 9>"$LOCK"; flock -n 9 || { echo "başka bir harita indirmesi çalışıyor / another map download is running ($LOCK)"; exit 0; }
 mkdir -p "$MAPS" "$LIB"
