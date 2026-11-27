@@ -79,6 +79,7 @@ fi
 say "3/3 Ana sayfa / homepage"
 "$REPO/scripts/install-homepage.sh"
 "$REPO/scripts/install-disk-health.sh"
+"$REPO/scripts/install-telefon.sh"
 
 say "Kurulum sonrası sağlık kontrolü / post-install health check"
 echo "İçerikler henüz indirilmediyse ZIM uyarıları normaldir / ZIM warnings are expected before downloading content."
@@ -92,6 +93,7 @@ cat <<EOF
 Ana sayfa / homepage:     http://$IP/home   (hotspot üzerinden / via hotspot: http://box.lan/home)
 Yönetim / admin console:  http://$IP/admin  (kullanıcı / user: iiab-admin)
 
-Sıradaki adım / next step: içerikleri indir / download content
+Sıradaki adım / next step: içerikleri ve telefon uygulamasını indir / download content and the phone app
   sudo ./scripts/download-content.sh
+  sudo ./scripts/download-app.sh
 EOF
